@@ -3,29 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratorium Alkimia V2</title>
+    <title>Laboratorium Alkimia V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     <style>
+        /* --- Kustomisasi Tema dan Variabel --- */
         :root {
-            --primary-glow: #a855f7; /* Ungu Cerah */
+            --primary-glow: #a855f7; /* Ungu */
             --secondary-glow: #facc15; /* Emas */
-            --background-color: #0c0a09;
+            --background-start: #111827;
+            --background-end: #0c0a09;
+            --font-color: #e5e7eb;
+            --success-color: #4ade80;
+            --fail-color: #f87171;
         }
+        
+        /* --- Base & Latar Belakang --- */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Cg fill="%231e1b4b" fill-opacity="0.1"%3E%3Crect x="0" y="0" width="100" height="100"/%3E%3C/g%3E%3C/svg%3E');
+            background-color: var(--background-end);
+            color: var(--font-color);
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
+        #particle-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at bottom, var(--background-start) 0%, var(--background-end) 100%);
+        }
+        
         .font-cinzel { font-family: 'Cinzel Decorative', cursive; }
 
-        /* Partikel Latar Belakang & Efek Tambahan */
-        #particle-container { background: radial-gradient(ellipse at bottom, #111827 0%, var(--background-color) 100%); }
+        /* --- Panel Kaca & Teks --- */
+        .glass-pane {
+            background: rgba(10, 10, 12, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid color-mix(in srgb, var(--primary-glow), transparent 80%);
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+        }
+        .gold-text { color: var(--secondary-glow); text-shadow: 0 0 5px var(--secondary-glow); }
+
+        /* --- Animasi Partikel --- */
         .particle {
             position: absolute; border-radius: 50%; background: var(--primary-glow);
             animation: rise 20s infinite ease-in;
@@ -34,33 +59,22 @@
             0% { transform: translateY(0) scale(0.5); opacity: 0; }
             10% { opacity: 0.9; }
             90% { opacity: 0.9; }
-            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+            100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
         }
 
-        /* Styling Umum */
-        .glass-pane {
-            background: rgba(10, 10, 12, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(168, 85, 247, 0.2);
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        }
-        .gold-text { color: var(--secondary-glow); text-shadow: 0 0 5px var(--secondary-glow); }
-
-        /* Lingkaran Transmutasi */
+        /* --- Lingkaran Transmutasi --- */
         #transmutation-circle {
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            border: 4px solid #4a044e;
+            border: 4px solid color-mix(in srgb, var(--primary-glow), #4a044e 50%);
             box-shadow: 0 0 15px var(--primary-glow), 0 0 30px var(--primary-glow), inset 0 0 15px var(--primary-glow);
-            position: relative;
         }
         #transmutation-circle.active {
-            transform: scale(1.05) rotate(360deg);
+            transform: scale(1.05);
             border-color: var(--secondary-glow);
             box-shadow: 0 0 25px var(--secondary-glow), 0 0 50px var(--secondary-glow), inset 0 0 25px var(--secondary-glow);
         }
         .transmutation-particle {
-            position: absolute;
-            width: 8px; height: 8px;
+            position: absolute; width: 8px; height: 8px;
             background: var(--secondary-glow); border-radius: 50%;
             opacity: 0; animation: transmute-spark 1.5s ease-out forwards;
         }
@@ -70,120 +84,253 @@
             100% { transform: scale(1) translate(var(--tx, 0), var(--ty, 0)); opacity: 0; }
         }
 
-        /* Elemen */
+        /* --- Elemen & Interaksi --- */
         .element {
             cursor: grab;
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
-            border: 1px solid transparent;
+            border: 2px solid transparent;
         }
         .element:hover {
             transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(250, 204, 21, 0.7);
-            background-color: rgba(250, 204, 21, 0.1);
-            border-color: rgba(250, 204, 21, 0.5);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--secondary-glow), transparent 30%);
+            background-color: color-mix(in srgb, var(--secondary-glow), transparent 90%);
+            border-color: color-mix(in srgb, var(--secondary-glow), transparent 50%);
         }
         .element.dragging { cursor: grabbing; opacity: 0.5; transform: scale(1.2); }
+        .element.hint {
+            animation: hint-glow 2s infinite;
+        }
+        @keyframes hint-glow {
+            0%, 100% { border-color: color-mix(in srgb, var(--secondary-glow), transparent 50%); box-shadow: 0 0 15px color-mix(in srgb, var(--secondary-glow), transparent 30%); }
+            50% { border-color: var(--secondary-glow); box-shadow: 0 0 25px var(--secondary-glow); }
+        }
 
-        /* Modals & Animasi */
+        /* --- Modal & Animasi UI --- */
         .modal { transition: opacity 0.3s ease, visibility 0.3s ease; }
         .modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .modal-card { transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
-        .modal.hidden .modal-card { transform: scale(0.9); }
-        
-        /* Avatar */
-        .avatar-option { border: 2px solid transparent; transition: all 0.2s ease; }
-        .avatar-option:hover { border-color: var(--primary-glow); transform: scale(1.05); }
+        .modal-card { transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease; transform: scale(0.95); opacity: 0; }
+        .modal:not(.hidden) .modal-card { transform: scale(1); opacity: 1; }
         .avatar-option.selected { border-color: var(--secondary-glow); box-shadow: 0 0 10px var(--secondary-glow); }
 
-        /* Achievement Toast */
-        #achievement-toast {
+        /* --- Toast & Notifikasi --- */
+        .toast {
             transform: translateY(200%);
             transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        #achievement-toast.show { transform: translateY(0); }
+        .toast.show { transform: translateY(0); }
         
-        /* Scrollbar Kustom */
+        /* --- Scrollbar Kustom --- */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4a044e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--primary-glow), #000 50%); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-glow); }
+
+        /* --- Tata Letak Responsif --- */
+        .mobile-view { display: none; }
+        @media (max-width: 1023px) {
+            .desktop-view { display: none; }
+            .mobile-view { display: flex; }
+            #game-container {
+                display: flex;
+                flex-direction: column;
+                height: 100vh; /* Full viewport height */
+                padding-bottom: 64px; /* Space for nav bar */
+            }
+            .main-content-area {
+                flex-grow: 1;
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
-<body class="text-gray-200 select-none">
-    <div id="particle-container" class="absolute inset-0 z-0 pointer-events-none"></div>
+<body class="select-none">
+    <div id="particle-container"></div>
     <audio id="bg-music" loop src="https://www.myinstants.com/media/sounds/fantasy-background-music-no-copyright.mp3"></audio>
 
-    <!-- Modal Selamat Datang -->
+    <!-- === MODAL SELAMAT DATANG === -->
     <div id="welcome-modal" class="modal fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50">
         <div class="modal-card glass-pane rounded-2xl p-8 text-center w-11/12 max-w-lg">
             <h2 class="font-cinzel text-4xl gold-text mb-4">Selamat Datang, Alkemis!</h2>
-            <p class="text-gray-400 mb-6">Sebelum memulai perjalanan transmutasi, beritahu kami namamu.</p>
+            <p class="text-gray-400 mb-6">Masukkan namamu dan pilih avatar untuk memulai perjalanan transmutasi.</p>
             <input type="text" id="player-name-input" placeholder="Nama Alkemis..." class="w-full bg-gray-900 border border-purple-800 rounded-lg px-4 py-2 text-center text-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-6">
             <h3 class="text-xl font-bold mb-4">Pilih Avatarmu</h3>
-            <div id="avatar-selection" class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-8">
-                <!-- Opsi Avatar -->
-            </div>
+            <div id="avatar-selection" class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-8"></div>
             <button id="start-game-btn" class="font-cinzel bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/20 disabled:opacity-50 disabled:cursor-not-allowed">Mulai Petualangan</button>
         </div>
     </div>
-
-    <!-- Kontainer Utama Game -->
-    <div id="game-container" class="hidden relative min-h-screen lg:grid lg:grid-cols-3 p-4 z-10 gap-4 items-start">
-        <!-- Kolom Kiri: Rak Elemen & Profil -->
-        <div class="glass-pane rounded-2xl p-4 flex flex-col h-full max-h-[95vh] order-1 lg:order-1">
-            <div class="flex items-center gap-4 border-b-2 border-yellow-400/30 pb-3 mb-3">
-                <div id="profile-avatar" class="w-16 h-16 rounded-full bg-gray-900 border-2 border-yellow-400"></div>
-                <div>
-                    <h2 id="profile-name" class="font-cinzel text-xl gold-text">Alkemis</h2>
-                    <p id="progress-counter" class="text-sm text-gray-400">Elemen Ditemukan: 0 / 0</p>
-                </div>
-                <button id="achievements-btn" title="Pencapaian" class="ml-auto text-3xl transform hover:scale-110 transition-transform">🏆</button>
-            </div>
-            <input type="text" id="search-bar" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari elemen...">
-            <div id="element-shelf" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-4 overflow-y-auto p-2"></div>
+    
+    <!-- === TUTORIAL INTERAKTIF === -->
+    <div id="tutorial-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 z-40 flex items-center justify-center p-4 text-center">
+        <div id="tutorial-box" class="relative bg-gray-900 border-2 border-yellow-400 p-6 rounded-lg max-w-md shadow-2xl">
+            <p id="tutorial-text" class="text-lg mb-4"></p>
+            <button id="next-tutorial-btn" class="bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg">Mengerti</button>
         </div>
+    </div>
 
-        <!-- Kolom Tengah: Area Alkimia -->
-        <div class="flex flex-col items-center justify-center h-full order-3 lg:order-2 my-8 lg:my-0">
-            <h1 class="font-cinzel text-3xl md:text-5xl text-center tracking-widest text-purple-300 mb-6">Laboratorium Alkimia</h1>
-            <div id="transmutation-circle" class="w-56 h-56 md:w-72 md:h-72 rounded-full flex items-center justify-center p-4">
-                 <div id="circle-content" class="text-center text-gray-400 transition-opacity">
-                    <p class="font-cinzel text-lg">Tempatkan Elemen</p>
-                </div>
-                <div id="slots" class="absolute flex justify-center items-center gap-4"></div>
-            </div>
-            <div class="h-16 mt-6 flex flex-col items-center justify-center">
-                 <p id="info-text" class="text-lg text-yellow-300 font-semibold transition-all duration-300 opacity-0 transform translate-y-2"></p>
-                 <button id="clear-slots-btn" class="hidden mt-2 bg-red-800/80 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors">Kosongkan</button>
-            </div>
-        </div>
+
+    <!-- === KONTAINER UTAMA GAME === -->
+    <div id="game-container" class="hidden relative min-h-screen p-2 sm:p-4 z-10 gap-4">
         
-        <!-- Kolom Kanan: Grimoire & Kontrol -->
-        <div class="glass-pane rounded-2xl p-4 flex flex-col h-full max-h-[95vh] order-2 lg:order-3">
-            <div class="flex items-center justify-center border-b-2 border-yellow-400/30 pb-3 mb-3">
-                 <h2 class="font-cinzel text-2xl text-center gold-text">Grimoire</h2>
-                 <span id="recipe-count" class="ml-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">0/0</span>
+        <!-- ================================= -->
+        <!-- ====== TAMPILAN DESKTOP ========= -->
+        <!-- ================================= -->
+        <div class="desktop-view hidden lg:grid lg:grid-cols-3 h-full gap-4 items-start max-h-screen py-2">
+            <!-- Kolom Kiri: Rak Elemen & Profil -->
+            <div class="glass-pane rounded-2xl p-4 flex flex-col h-full max-h-[96vh]">
+                <div class="flex items-center gap-4 border-b-2 border-yellow-400/30 pb-3 mb-3">
+                    <div id="profile-avatar-desktop" class="w-16 h-16 rounded-full bg-gray-900 border-2 border-yellow-400 flex-shrink-0"></div>
+                    <div>
+                        <h2 id="profile-name-desktop" class="font-cinzel text-xl gold-text">Alkemis</h2>
+                        <p id="progress-counter-desktop" class="text-sm text-gray-400">Elemen: 0 / 0</p>
+                    </div>
+                </div>
+                <input type="text" id="search-bar-desktop" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari elemen...">
+                <div id="element-shelf-desktop" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-4 overflow-y-auto p-2 flex-grow"></div>
             </div>
-            <div id="grimoire" class="space-y-3 overflow-y-auto p-2 flex-grow"></div>
-            <div class="mt-auto pt-3 flex justify-center gap-4 text-3xl">
-                <button id="music-toggle-btn" title="Musik Latar" class="transform hover:scale-110 transition-transform">🎵</button>
-                <button id="hint-btn" title="Petunjuk" class="transform hover:scale-110 transition-transform">💡</button>
-                <button id="reset-btn" title="Reset Progres" class="transform hover:scale-110 transition-transform">♻️</button>
+
+            <!-- Kolom Tengah: Area Alkimia -->
+            <div class="flex flex-col items-center justify-center h-full max-h-[96vh]">
+                <h1 class="font-cinzel text-3xl md:text-5xl text-center tracking-widest text-purple-300 mb-6">Laboratorium Alkimia</h1>
+                <div id="transmutation-circle" class="w-56 h-56 md:w-80 md:h-80 rounded-full flex items-center justify-center p-4 relative">
+                     <div id="circle-content" class="text-center text-gray-400 transition-opacity">
+                        <p class="font-cinzel text-lg">Tempatkan Elemen</p>
+                    </div>
+                    <div id="slots" class="absolute flex justify-center items-center gap-4"></div>
+                </div>
+                <div class="h-24 mt-6 flex flex-col items-center justify-center">
+                     <p id="info-text" class="text-lg text-center font-semibold transition-all duration-300 opacity-0 transform translate-y-2"></p>
+                     <div id="trash-can" class="mt-4 text-4xl opacity-0 transition-opacity cursor-pointer p-2 rounded-full hover:bg-red-500/20">🗑️</div>
+                     <button id="clear-slots-btn" class="hidden mt-2 bg-red-800/80 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors">Kosongkan</button>
+                </div>
+            </div>
+            
+            <!-- Kolom Kanan: Grimoire & Kontrol -->
+            <div class="glass-pane rounded-2xl p-4 flex flex-col h-full max-h-[96vh]">
+                <div class="flex items-center justify-center border-b-2 border-yellow-400/30 pb-3 mb-3">
+                     <h2 class="font-cinzel text-2xl text-center gold-text">Grimoire</h2>
+                     <span id="recipe-count-desktop" class="ml-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">0/0</span>
+                </div>
+                <input type="text" id="grimoire-search-desktop" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari resep...">
+                <div id="grimoire-desktop" class="space-y-3 overflow-y-auto p-2 flex-grow"></div>
+                <div class="mt-auto pt-3 flex justify-center gap-4 text-3xl">
+                    <button id="music-toggle-btn" title="Musik" class="transform hover:scale-110 transition-transform">🎵</button>
+                    <button id="hint-btn" title="Petunjuk" class="transform hover:scale-110 transition-transform">💡</button>
+                    <button id="stats-btn" title="Statistik" class="transform hover:scale-110 transition-transform">📊</button>
+                    <button id="achievements-btn" title="Pencapaian" class="transform hover:scale-110 transition-transform">🏆</button>
+                    <button id="settings-btn" title="Pengaturan" class="transform hover:scale-110 transition-transform">⚙️</button>
+                    <button id="reset-btn" title="Reset Progres" class="transform hover:scale-110 transition-transform">♻️</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================= -->
+        <!-- ====== TAMPILAN MOBILE ========== -->
+        <!-- ================================= -->
+        <div class="mobile-view flex-col h-full w-full">
+            <!-- Header Mobile -->
+            <div class="glass-pane rounded-xl p-2 flex items-center gap-2 mb-2">
+                <div id="profile-avatar-mobile" class="w-12 h-12 rounded-full bg-gray-900 border-2 border-yellow-400 flex-shrink-0"></div>
+                <div>
+                    <h2 id="profile-name-mobile" class="font-cinzel text-md gold-text">Alkemis</h2>
+                    <p id="progress-counter-mobile" class="text-xs text-gray-400">Elemen: 0 / 0</p>
+                </div>
+                <div class="ml-auto flex items-center gap-2 text-2xl">
+                    <button id="stats-btn-mobile" title="Statistik">📊</button>
+                    <button id="achievements-btn-mobile" title="Pencapaian">🏆</button>
+                    <button id="settings-btn-mobile" title="Pengaturan">⚙️</button>
+                </div>
+            </div>
+
+            <!-- Konten Utama Mobile (Switchable) -->
+            <div class="main-content-area flex-grow relative">
+                <div id="mobile-alkimia" class="w-full h-full flex flex-col items-center justify-center p-2">
+                    <!-- Area Alkimia untuk mobile, sama seperti desktop tapi di sini -->
+                </div>
+                <div id="mobile-rak" class="hidden w-full h-full flex flex-col p-2 bg-black/50 rounded-lg">
+                    <input type="text" id="search-bar-mobile" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari elemen...">
+                    <div id="element-shelf-mobile" class="grid grid-cols-4 gap-3 overflow-y-auto p-1 flex-grow"></div>
+                </div>
+                <div id="mobile-grimoire" class="hidden w-full h-full flex flex-col p-2 bg-black/50 rounded-lg">
+                    <div class="flex items-center justify-center pb-2 mb-2">
+                         <h2 class="font-cinzel text-xl text-center gold-text">Grimoire</h2>
+                         <span id="recipe-count-mobile" class="ml-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full">0/0</span>
+                    </div>
+                    <input type="text" id="grimoire-search-mobile" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari resep...">
+                    <div id="grimoire-mobile" class="space-y-2 overflow-y-auto p-1 flex-grow"></div>
+                </div>
+            </div>
+            
+            <!-- Navigasi Bawah Mobile -->
+            <div class="fixed bottom-0 left-0 right-0 h-16 bg-gray-900/80 backdrop-blur-sm flex justify-around items-center z-20 border-t border-purple-800/50">
+                <button data-view="rak" class="mobile-nav-btn flex flex-col items-center text-purple-400 p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10.5v7.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7.5"/><path d="M4 10.5V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4.5"/><path d="M12 14v-4"/><path d="M12 6V4"/><path d="M10 4h4"/></svg>
+                    <span class="text-xs">Rak</span>
+                </button>
+                <button data-view="alkimia" class="mobile-nav-btn flex flex-col items-center text-yellow-400 p-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    <span class="text-xs">Alkimia</span>
+                </button>
+                <button data-view="grimoire" class="mobile-nav-btn flex flex-col items-center text-purple-400 p-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span class="text-xs">Grimoire</span>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- === KUMPULAN MODAL LAINNYA === -->
     <!-- Modal Pencapaian -->
     <div id="achievements-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div class="modal-card glass-pane rounded-2xl p-6 text-center w-11/12 max-w-2xl relative">
-            <button id="close-achievements-btn" class="absolute top-4 right-4 text-2xl">&times;</button>
-            <h2 class="font-cinzel text-4xl gold-text mb-6">Pencapaian</h2>
+        <div class="modal-card glass-pane rounded-2xl p-6 w-11/12 max-w-2xl relative">
+            <button class="close-modal-btn absolute top-4 right-4 text-3xl">&times;</button>
+            <h2 class="font-cinzel text-4xl gold-text mb-6 text-center">Pencapaian</h2>
             <div id="achievements-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
         </div>
     </div>
+
+    <!-- Modal Statistik -->
+    <div id="stats-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="modal-card glass-pane rounded-2xl p-6 w-11/12 max-w-lg relative">
+            <button class="close-modal-btn absolute top-4 right-4 text-3xl">&times;</button>
+            <h2 class="font-cinzel text-4xl gold-text mb-6 text-center">Statistik</h2>
+            <div id="stats-list" class="grid grid-cols-2 gap-4 text-lg"></div>
+        </div>
+    </div>
     
+    <!-- Modal Pengaturan -->
+    <div id="settings-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="modal-card glass-pane rounded-2xl p-6 w-11/12 max-w-lg relative">
+            <button class="close-modal-btn absolute top-4 right-4 text-3xl">&times;</button>
+            <h2 class="font-cinzel text-4xl gold-text mb-6 text-center">Pengaturan</h2>
+            <div class="space-y-6">
+                 <div>
+                    <h3 class="text-lg font-semibold mb-2 gold-text">Tema Laboratorium</h3>
+                    <div id="theme-selection" class="grid grid-cols-3 sm:grid-cols-5 gap-3"></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 gold-text">Lainnya</h3>
+                    <div class="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg">
+                        <span>Musik Latar</span>
+                        <button id="music-toggle-btn-settings" class="text-3xl">🎵</button>
+                    </div>
+                </div>
+                <button id="reset-btn-settings" class="w-full bg-red-800 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">Reset Semua Progres</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bonus Harian -->
+    <div id="daily-bonus-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="modal-card glass-pane rounded-2xl p-8 text-center w-11/12 max-w-md">
+            <h2 class="font-cinzel text-3xl gold-text mb-2">Bonus Harian!</h2>
+            <p class="text-gray-400 mb-6">Selamat datang kembali, Alkemis! Sebagai hadiah, ini petunjuk gratis untukmu.</p>
+            <div id="daily-hint" class="bg-gray-900/70 p-4 rounded-lg text-2xl mb-6"></div>
+            <button class="close-modal-btn font-cinzel bg-yellow-500 text-gray-900 font-bold py-2 px-6 rounded-lg hover:bg-yellow-400">Lanjutkan</button>
+        </div>
+    </div>
+
     <!-- Toast Pencapaian -->
-    <div id="achievement-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 glass-pane p-4 rounded-xl shadow-2xl z-50 flex items-center gap-4 w-11/12 max-w-md">
+    <div id="achievement-toast" class="toast fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 glass-pane p-4 rounded-xl shadow-2xl z-50 flex items-center gap-4 w-11/12 max-w-md">
         <div class="text-4xl">🏆</div>
         <div>
             <h3 class="font-bold gold-text">Pencapaian Terbuka!</h3>
@@ -191,143 +338,169 @@
             <p id="toast-desc" class="text-sm text-gray-400"></p>
         </div>
     </div>
+    
+    <!-- Layar Kemenangan -->
+    <div id="win-screen" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 text-center p-4">
+        <h1 class="font-cinzel text-5xl md:text-7xl mb-4" style="color: #FFD700; text-shadow: 0 0 20px #FFD700;">Magnum Opus!</h1>
+        <p class="text-xl md:text-2xl mb-8 text-gray-300">Kamu telah berhasil menciptakan Batu Bertuah!</p>
+        <div class="text-8xl mb-8">🔴</div>
+        <p class="text-gray-400 max-w-2xl mb-8">Selamat, Alkemis Agung. Kamu telah menguasai seni transmutasi dan membuka rahasia terbesar alam semesta. Perjalananmu telah mencapai puncaknya.</p>
+        <button id="restart-game-btn" class="font-cinzel bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg text-xl hover:bg-yellow-400 transition-transform transform hover:scale-105">Mulai Lagi</button>
+    </div>
+
 
 </body>
 <script>
-// --- Script Utama Laboratorium Alkimia V2 ---
+// --- Script Utama Laboratorium Alkimia V3 ---
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Data Game: Elemen, Resep, Pencapaian ---
+    // --- Data Game: Elemen, Resep, Pencapaian, Tema ---
     const elements = {
         // Tier 0
-        'air': { name: 'Udara', icon: '🌬️', description: 'Esensi kebebasan dan langit.', tier: 0 },
-        'earth': { name: 'Tanah', icon: '🌍', description: 'Fondasi yang kokoh dan stabil.', tier: 0 },
-        'fire': { name: 'Api', icon: '🔥', description: 'Energi, gairah, dan transformasi.', tier: 0 },
-        'water': { name: 'Air', icon: '💧', description: 'Aliran kehidupan, emosi, dan penyucian.', tier: 0 },
+        'air': { name: 'Udara', icon: '🌬️', tier: 0 }, 'earth': { name: 'Tanah', icon: '🌍', tier: 0 },
+        'fire': { name: 'Api', icon: '🔥', tier: 0 }, 'water': { name: 'Air', icon: '💧', tier: 0 },
         // Tier 1
-        'steam': { name: 'Uap', icon: '💨', description: 'Air yang dipanaskan menjadi gas.', tier: 1 },
-        'lava': { name: 'Lava', icon: '🌋', description: 'Batu cair dari inti dunia.', tier: 1 },
-        'dust': { name: 'Debu', icon: ' bụi ', description: 'Partikel halus dari tanah kering.', tier: 1 },
-        'mud': { name: 'Lumpur', icon: '🟤', description: 'Tanah yang dibasahi oleh air.', tier: 1 },
-        'energy': { name: 'Energi', icon: '⚡', description: 'Kekuatan tak terlihat yang menggerakkan segalanya.', tier: 1 },
-        'mist': { name: 'Kabut', icon: '🌫️', description: 'Tetesan air kecil yang melayang di udara.', tier: 1 },
+        'steam': { name: 'Uap', icon: '💨', tier: 1 }, 'lava': { name: 'Lava', icon: '🌋', tier: 1 },
+        'dust': { name: 'Debu', icon: ' bụi ', tier: 1 }, 'mud': { name: 'Lumpur', icon: '🟤', tier: 1 },
+        'energy': { name: 'Energi', icon: '⚡', tier: 1 }, 'mist': { name: 'Kabut', icon: '🌫️', tier: 1 },
         // Tier 2
-        'stone': { name: 'Batu', icon: '🗿', description: 'Lava yang telah mendingin dan mengeras.', tier: 2 },
-        'clay': { name: 'Tanah Liat', icon: '🏺', description: 'Lumpur yang dibakar menjadi keras.', tier: 2 },
-        'plant': { name: 'Tanaman', icon: '🌱', description: 'Kehidupan yang tumbuh dari tanah dan air.', tier: 2 },
-        'sand': { name: 'Pasir', icon: '🏜️', description: 'Batu yang terkikis menjadi butiran kecil.', tier: 2 },
-        'lightning': { name: 'Petir', icon: '🌩️', description: 'Pelepasan energi listrik di atmosfer.', tier: 2 },
+        'stone': { name: 'Batu', icon: '🗿', tier: 2 }, 'clay': { name: 'Tanah Liat', icon: '🏺', tier: 2 },
+        'plant': { name: 'Tanaman', icon: '🌱', tier: 2 }, 'sand': { name: 'Pasir', icon: '🏜️', tier: 2 },
+        'lightning': { name: 'Petir', icon: '🌩️', tier: 2 },'swamp': { name: 'Rawa', icon: '🐊', tier: 2 },
         // Tier 3
-        'metal': { name: 'Logam', icon: '⚙️', description: 'Batu yang dilebur dengan panas yang hebat.', tier: 3 },
-        'glass': { name: 'Kaca', icon: '💎', description: 'Pasir yang dilelehkan pada suhu tinggi.', tier: 3 },
-        'brick': { name: 'Bata', icon: '🧱', description: 'Tanah liat yang dibentuk dan dibakar.', tier: 3 },
-        'life': { name: 'Kehidupan', icon: '🧬', description: 'Percikan misterius yang memulai segalanya.', tier: 3 },
-        'swamp': { name: 'Rawa', icon: '🐊', description: 'Lahan basah tempat kehidupan purba bersemayam.', tier: 3 },
+        'metal': { name: 'Logam', icon: '⚙️', tier: 3 }, 'glass': { name: 'Kaca', icon: '💎', tier: 3 },
+        'brick': { name: 'Bata', icon: '🧱', tier: 3 }, 'life': { name: 'Kehidupan', icon: '🧬', tier: 3 },
+        'tree': { name: 'Pohon', icon: '🌳', tier: 3 },'obsidian': { name: 'Obsidian', icon: '🔮', tier: 3 },
         // Tier 4
-        'human': { name: 'Manusia', icon: '👤', description: 'Makhluk sadar yang lahir dari tanah liat dan kehidupan.', tier: 4 },
-        'tool': { name: 'Alat', icon: '🛠️', description: 'Logam dan batu yang dibentuk untuk sebuah tujuan.', tier: 4 },
-        'tree': { name: 'Pohon', icon: '🌳', description: 'Tanaman yang tumbuh besar dan kuat seiring waktu.', tier: 4 },
-        'bird': { name: 'Burung', icon: '🐦', description: 'Kehidupan yang menguasai angkasa.', tier: 4 },
-        'obsidian': { name: 'Obsidian', icon: '🔮', description: 'Kaca vulkanik, tajam dan misterius.', tier: 4 },
+        'human': { name: 'Manusia', icon: '👤', tier: 4 }, 'tool': { name: 'Alat', icon: '🛠️', tier: 4 },
+        'bird': { name: 'Burung', icon: '🐦', tier: 4 },'paper': { name: 'Kertas', icon: '📜', tier: 4 },
+        'scythe': { name: 'Sabit', icon: '🌾', tier: 4 },
         // Tier 5
-        'house': { name: 'Rumah', icon: '🏠', description: 'Perlindungan yang dibangun dari bata dan kayu.', tier: 5 },
-        'sword': { name: 'Pedang', icon: '⚔️', description: 'Alat dari logam yang ditempa untuk pertempuran.', tier: 5 },
-        'wizard': { name: 'Penyihir', icon: '🧙', description: 'Manusia yang menguasai energi dan pengetahuan kuno.', tier: 5 },
-        'golem': { name: 'Golem', icon: '🤖', description: 'Patung tanah liat yang dihidupkan dengan sihir.', tier: 5 },
-        'phoenix': { name: 'Phoenix', icon: '🕊️', description: 'Burung mitos yang lahir kembali dari api.', tier: 5 },
-        // Tier 6 (Baru)
-        'electricity': { name: 'Listrik', icon: '💡', description: 'Energi petir yang dijinakkan.', tier: 6 },
-        'corpse': { name: 'Jasad', icon: '💀', description: 'Wadah kehidupan yang telah ditinggalkan.', tier: 6 },
-        'paper': { name: 'Kertas', icon: '📜', description: 'Pohon yang diolah menjadi lembaran untuk menulis.', tier: 6 },
-        'boat': { name: 'Perahu', icon: '⛵', description: 'Kayu yang dibentuk untuk mengarungi air.', tier: 6 },
-        'scythe': { name: 'Sabit', icon: '🌾', description: 'Alat untuk memanen tanaman atau jiwa.', tier: 6 },
-        // Tier 7 (Baru)
-        'computer': { name: 'Komputer', icon: '💻', description: 'Alat kompleks yang ditenagai oleh listrik dan logika.', tier: 7 },
-        'book': { name: 'Buku', icon: '📖', description: 'Kumpulan kertas yang berisi pengetahuan.', tier: 7 },
-        'death': { name: 'Kematian', icon: '☠️', description: 'Akhir dari kehidupan, diwujudkan oleh sabit.', tier: 7 },
-        'time': { name: 'Waktu', icon: '⏳', description: 'Pasir yang mengalir tanpa henti di dalam kaca.', tier: 7 },
-        'star': { name: 'Bintang', icon: '⭐', description: 'Api surgawi yang bersinar di kehampaan.', tier: 7 },
+        'house': { name: 'Rumah', icon: '🏠', tier: 5 }, 'sword': { name: 'Pedang', icon: '⚔️', tier: 5 },
+        'wizard': { name: 'Penyihir', icon: '🧙', tier: 5 }, 'golem': { name: 'Golem', icon: '🤖', tier: 5 },
+        'phoenix': { name: 'Phoenix', icon: '🕊️', tier: 5 }, 'corpse': { name: 'Jasad', icon: '💀', tier: 5 },
+        // Tier 6
+        'electricity': { name: 'Listrik', icon: '💡', tier: 6 }, 'boat': { name: 'Perahu', icon: '⛵', tier: 6 },
+        'death': { name: 'Kematian', icon: '☠️', tier: 6 }, 'time': { name: 'Waktu', icon: '⏳', tier: 6 },
+        'love': { name: 'Cinta', icon: '❤️', tier: 6 }, 'city': { name: 'Kota', icon: '🏙️', tier: 6 },
+        // Tier 7
+        'computer': { name: 'Komputer', icon: '💻', tier: 7 }, 'book': { name: 'Buku', icon: '📖', tier: 7 },
+        'star': { name: 'Bintang', icon: '⭐', tier: 7 }, 'undead': { name: 'Mayat Hidup', icon: '🧟', tier: 7 },
         // Tier 8 - Endgame
-        'gold': { name: 'Emas', icon: '🌟', description: 'Logam paling murni, simbol kesempurnaan.', tier: 8 },
-        'philosophers_stone': { name: 'Batu Bertuah', icon: '🔴', description: 'Magnum Opus. Substansi legendaris transmutasi.', tier: 9 },
+        'gold': { name: 'Emas', icon: '🌟', tier: 8 }, 'philosophy': { name: 'Filsafat', icon: '🧠', tier: 8 },
+        'galaxy': { name: 'Galaksi', icon: '🌌', tier: 8 },
+        // Tier 9 - Ultimate
+        'philosophers_stone': { name: 'Batu Bertuah', icon: '🔴', tier: 9 },
+        // Gagal
+        'junk': { name: 'Rongsokan', icon: '🔩', tier: -1, isJunk: true }
     };
 
     const recipes = {
         'fire,water': 'steam', 'earth,fire': 'lava', 'air,earth': 'dust', 'earth,water': 'mud',
         'air,fire': 'energy', 'air,water': 'mist', 'air,lava': 'stone', 'fire,mud': 'clay',
         'earth,plant': 'plant', 'water,plant': 'plant', 'stone,air': 'sand', 'energy,mist': 'lightning',
-        'fire,stone': 'metal', 'fire,sand': 'glass', 'clay,fire': 'brick', 'energy,mud': 'life',
-        'earth,swamp': 'swamp', 'plant,water': 'swamp', 'clay,life': 'human', 'metal,stone': 'tool',
-        'plant,earth': 'tree', 'air,life': 'bird', 'lava,water': 'obsidian', 'brick,tree': 'house',
-        'metal,tool': 'sword', 'human,energy': 'wizard', 'clay,wizard': 'golem', 'bird,fire': 'phoenix',
-        'metal,lightning': 'electricity', 'human,fire': 'corpse', 'tree,water': 'paper', 'tree,water': 'boat',
-        'sword,plant': 'scythe', 'tool,electricity': 'computer', 'paper,tree': 'book', 'corpse,scythe': 'death',
-        'sand,glass': 'time', 'energy,air': 'star', 'metal,wizard': 'gold', 'life,gold': 'philosophers_stone'
+        'plant,water': 'swamp', 'fire,stone': 'metal', 'fire,sand': 'glass', 'clay,fire': 'brick', 
+        'energy,swamp': 'life', 'lava,water': 'obsidian', 'plant,earth': 'tree', 'clay,life': 'human',
+        'metal,stone': 'tool', 'air,life': 'bird', 'tree,water': 'paper', 'sword,plant': 'scythe',
+        'brick,tree': 'house', 'metal,tool': 'sword', 'human,energy': 'wizard', 'clay,wizard': 'golem', 
+        'bird,fire': 'phoenix', 'human,fire': 'corpse', 'metal,lightning': 'electricity', 'tree,water': 'boat', 
+        'corpse,scythe': 'death', 'sand,glass': 'time', 'human,human': 'love', 'house,house': 'city',
+        'tool,electricity': 'computer', 'paper,tree': 'book', 'energy,air': 'star', 'corpse,life': 'undead',
+        'metal,wizard': 'gold', 'human,star': 'philosophy', 'star,star': 'galaxy', 'life,gold': 'philosophers_stone'
     };
     
     const achievements = {
-        discover10: { name: "Alkemis Pemula", desc: "Temukan 10 elemen unik.", threshold: 10, unlocked: false },
-        discover25: { name: "Ahli Transmutasi", desc: "Temukan 25 elemen unik.", threshold: 25, unlocked: false },
-        discoverAll: { name: "Archmage Agung", desc: "Temukan semua elemen yang ada.", threshold: Object.keys(elements).length, unlocked: false },
-        findLife: { name: "Percikan Ilahi", desc: "Berhasil menciptakan Kehidupan.", element: 'life', unlocked: false },
-        findHuman: { name: "Citra Pencipta", desc: "Berhasil menciptakan Manusia.", element: 'human', unlocked: false },
-        findGold: { name: "Sentuhan Midas", desc: "Berhasil mentransmutasi Emas.", element: 'gold', unlocked: false },
-        endGame: { name: "Magnum Opus", desc: "Ciptakan Batu Bertuah!", element: 'philosophers_stone', unlocked: false },
+        discover10: { name: "Alkemis Pemula", desc: "Temukan 10 elemen unik.", threshold: 10 },
+        discover25: { name: "Ahli Transmutasi", desc: "Temukan 25 elemen unik.", threshold: 25 },
+        discover50: { name: "Master Alkimia", desc: "Temukan 50 elemen unik.", threshold: 50 },
+        discoverAll: { name: "Archmage Agung", desc: "Temukan semua elemen.", threshold: Object.keys(elements).filter(k => !elements[k].isJunk).length },
+        findLife: { name: "Percikan Ilahi", desc: "Ciptakan Kehidupan.", element: 'life' },
+        findHuman: { name: "Citra Pencipta", desc: "Ciptakan Manusia.", element: 'human' },
+        findGold: { name: "Sentuhan Midas", desc: "Transmutasi Emas.", element: 'gold' },
+        endGame: { name: "Magnum Opus", desc: "Ciptakan Batu Bertuah!", element: 'philosophers_stone' },
     };
 
     const avatars = ['🧙', '👩‍🔬', '👨‍🚀', '🔮', '⚗️', '🌌'];
+    const themes = {
+        default: { name: 'Klasik Ungu', primary: '#a855f7', secondary: '#facc15' },
+        forest: { name: 'Hijau Hutan', primary: '#22c55e', secondary: '#f59e0b' },
+        ocean: { name: 'Biru Laut', primary: '#38bdf8', secondary: '#fef08a' },
+        volcano: { name: 'Merah Vulkanik', primary: '#ef4444', secondary: '#eab308' },
+        cosmos: { name: 'Kosmik Biru', primary: '#60a5fa', secondary: '#fde047' },
+    };
 
     // --- State Game ---
-    let playerData = {
-        name: 'Alkemis',
-        avatar: '🧙',
+    let playerData;
+    const defaultPlayerData = {
+        name: 'Alkemis', avatar: '🧙',
         discoveredElements: ['air', 'earth', 'fire', 'water'],
         discoveredRecipes: {},
-        achievements: { ...achievements },
+        achievements: Object.fromEntries(Object.keys(achievements).map(key => [key, { unlocked: false }])),
         musicOn: false,
+        stats: { combinations: 0, successes: 0, failures: 0, newDiscoveries: 0 },
+        settings: { theme: 'default' },
+        lastLogin: null,
+        tutorialCompleted: false,
     };
+
     let draggedElement = null;
     let droppedElements = [];
 
     // --- Cache Elemen DOM ---
-    const allDOMElements = {};
+    const DOMElements = {};
     const cacheDOM = () => {
         const ids = [
-            'welcome-modal', 'player-name-input', 'avatar-selection', 'start-game-btn', 'game-container', 'profile-avatar', 'profile-name',
-            'progress-counter', 'achievements-btn', 'search-bar', 'element-shelf', 'transmutation-circle', 'circle-content', 'slots',
-            'info-text', 'clear-slots-btn', 'grimoire', 'recipe-count', 'music-toggle-btn', 'hint-btn', 'reset-btn',
-            'achievements-modal', 'close-achievements-btn', 'achievements-list', 'achievement-toast', 'toast-name', 'toast-desc', 'bg-music'
+            'welcome-modal', 'player-name-input', 'avatar-selection', 'start-game-btn', 
+            'game-container', 'profile-avatar-desktop', 'profile-name-desktop', 'progress-counter-desktop', 
+            'search-bar-desktop', 'element-shelf-desktop', 'grimoire-desktop', 'recipe-count-desktop', 
+            'grimoire-search-desktop', 'transmutation-circle', 'circle-content', 'slots', 
+            'info-text', 'trash-can', 'clear-slots-btn', 'music-toggle-btn', 'hint-btn', 
+            'stats-btn', 'achievements-btn', 'settings-btn', 'reset-btn',
+            'profile-avatar-mobile', 'profile-name-mobile', 'progress-counter-mobile', 
+            'stats-btn-mobile', 'achievements-btn-mobile', 'settings-btn-mobile', 'mobile-alkimia',
+            'mobile-rak', 'search-bar-mobile', 'element-shelf-mobile', 'mobile-grimoire',
+            'recipe-count-mobile', 'grimoire-search-mobile', 'grimoire-mobile',
+            'achievements-modal', 'achievements-list', 'stats-modal', 'stats-list',
+            'settings-modal', 'theme-selection', 'music-toggle-btn-settings', 'reset-btn-settings',
+            'achievement-toast', 'toast-name', 'toast-desc', 'bg-music', 'win-screen', 'restart-game-btn',
+            'daily-bonus-modal', 'daily-hint', 'tutorial-overlay', 'tutorial-box', 'tutorial-text', 'next-tutorial-btn',
+            'particle-container'
         ];
-        ids.forEach(id => allDOMElements[id] = document.getElementById(id));
+        ids.forEach(id => DOMElements[id] = document.getElementById(id));
     };
 
-    // --- Inisialisasi Audio ---
-    let soundsReady = false;
-    let successSound = () => {}, failSound = () => {}, dropSound = () => {};
+    // --- Manajemen Suara ---
+    let sounds = {};
     const initAudio = async () => {
-        if (soundsReady || typeof Tone === 'undefined') return;
+        if (sounds.synth || typeof Tone === 'undefined') return;
         try {
             await Tone.start();
-            const synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
-            successSound = () => synth.triggerAttackRelease(['C4', 'E4', 'G4'], '0.5s');
-            failSound = () => new Tone.NoiseSynth({noise:{type:'pink'}, envelope:{attack:0.005, decay:0.1,sustain:0}}).toDestination().triggerAttackRelease('0.2s');
-            dropSound = () => new Tone.MembraneSynth().toDestination().triggerAttackRelease('C1', '0.1s');
-            soundsReady = true;
+            sounds.synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
+            sounds.noise = new Tone.NoiseSynth({noise:{type:'pink'}, envelope:{attack:0.005, decay:0.1,sustain:0}}).toDestination();
+            sounds.membrane = new Tone.MembraneSynth().toDestination();
+            sounds.click = () => new Tone.MembraneSynth({octaves:4, pitchDecay:0.1}).toDestination().triggerAttackRelease('C2', '8n');
+            sounds.success = () => sounds.synth.triggerAttackRelease(['C4', 'E4', 'G4'], '0.5s');
+            sounds.fail = () => sounds.noise.triggerAttackRelease('0.2s');
+            sounds.drop = () => sounds.membrane.triggerAttackRelease('C1', '0.1s');
+            sounds.uiClick = () => sounds.click();
+            console.log("Audio context started.");
         } catch (e) { console.error("Could not initialize audio:", e); }
     };
     
     // --- Manajemen State & Penyimpanan ---
-    const saveProgress = () => localStorage.setItem('alchemyV2Data', JSON.stringify(playerData));
+    const saveProgress = () => localStorage.setItem('alchemyV3Data', JSON.stringify(playerData));
     const loadProgress = () => {
-        const savedData = localStorage.getItem('alchemyV2Data');
+        const savedData = localStorage.getItem('alchemyV3Data');
         if (savedData) {
-            playerData = JSON.parse(savedData);
-            // Pastikan achievement baru ditambahkan jika tidak ada di data lama
+            playerData = { ...defaultPlayerData, ...JSON.parse(savedData) };
+             // Migrasi data lama jika ada field baru
+            playerData.stats = { ...defaultPlayerData.stats, ...playerData.stats };
+            playerData.settings = { ...defaultPlayerData.settings, ...playerData.settings };
             Object.keys(achievements).forEach(key => {
-                if (!playerData.achievements[key]) {
-                    playerData.achievements[key] = achievements[key];
-                }
+                if (!playerData.achievements[key]) playerData.achievements[key] = { unlocked: false };
             });
+        } else {
+            playerData = JSON.parse(JSON.stringify(defaultPlayerData)); // Deep copy
         }
     };
 
@@ -335,10 +508,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = () => {
         cacheDOM();
         loadProgress();
+        applyTheme(playerData.settings.theme);
 
-        if (!localStorage.getItem('alchemyV2Data')) {
+        if (!localStorage.getItem('alchemyV3Data')) {
             setupWelcomeModal();
-            allDOMElements['welcome-modal'].classList.remove('hidden');
+            DOMElements['welcome-modal'].classList.remove('hidden');
         } else {
             startGame();
         }
@@ -347,73 +521,101 @@ document.addEventListener('DOMContentLoaded', () => {
         addEventListeners();
     };
 
-    const setupWelcomeModal = () => {
-        allDOMElements['avatar-selection'].innerHTML = avatars.map(av => 
-            `<div class="avatar-option p-2 rounded-full cursor-pointer bg-gray-900/50" data-avatar="${av}">
-                <span class="text-4xl">${av}</span>
-            </div>`
-        ).join('');
-
-        allDOMElements['avatar-selection'].addEventListener('click', e => {
-            const target = e.target.closest('.avatar-option');
-            if (target) {
-                document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-                target.classList.add('selected');
-                playerData.avatar = target.dataset.avatar;
-                validateStartButton();
-            }
-        });
-
-        allDOMElements['player-name-input'].addEventListener('input', validateStartButton);
-        validateStartButton(); // Panggil sekali untuk set state awal
-    };
-
-    const validateStartButton = () => {
-        const name = allDOMElements['player-name-input'].value.trim();
-        const avatarSelected = document.querySelector('.avatar-option.selected');
-        allDOMElements['start-game-btn'].disabled = !name || !avatarSelected;
-    };
-
     const startGame = () => {
-        playerData.name = allDOMElements['player-name-input'].value.trim() || playerData.name;
-        allDOMElements['welcome-modal'].classList.add('hidden');
-        allDOMElements['game-container'].classList.remove('hidden');
-        allDOMElements['game-container'].classList.add('lg:grid', 'flex', 'flex-col');
+        playerData.name = DOMElements['player-name-input'].value.trim() || playerData.name;
+        DOMElements['welcome-modal'].classList.add('hidden');
+        DOMElements['game-container'].classList.remove('hidden');
         
-        updateProfileUI();
-        updateShelf();
-        updateGrimoire();
-        updateProgressCounter();
-        updateMusicState();
+        // Pindahkan elemen Alkimia ke kontainer mobile
+        const alchemyContent = [DOMElements['transmutation-circle'].parentElement.querySelector('h1'), DOMElements['transmutation-circle'], DOMElements['transmutation-circle'].parentElement.querySelector('.h-24')];
+        DOMElements['mobile-alkimia'].append(...alchemyContent);
+        
+        updateAllUI();
         saveProgress();
+        checkDailyBonus();
+
+        if (!playerData.tutorialCompleted) {
+            startTutorial();
+        }
     };
     
-    // --- Event Listeners ---
+    // --- Event Listeners Utama ---
     const addEventListeners = () => {
         document.body.addEventListener('click', initAudio, { once: true });
-        allDOMElements['start-game-btn'].addEventListener('click', startGame);
-        allDOMElements['search-bar'].addEventListener('input', () => updateShelf());
-        allDOMElements['transmutation-circle'].addEventListener('dragover', e => { e.preventDefault(); allDOMElements['transmutation-circle'].classList.add('active'); });
-        allDOMElements['transmutation-circle'].addEventListener('dragleave', () => allDOMElements['transmutation-circle'].classList.remove('active'));
-        allDOMElements['transmutation-circle'].addEventListener('drop', handleDrop);
-        allDOMElements['clear-slots-btn'].addEventListener('click', resetCircle);
-        allDOMElements['reset-btn'].addEventListener('click', resetGame);
-        allDOMElements['hint-btn'].addEventListener('click', showHint);
-        allDOMElements['music-toggle-btn'].addEventListener('click', toggleMusic);
-        allDOMElements['achievements-btn'].addEventListener('click', showAchievementsModal);
-        allDOMElements['close-achievements-btn'].addEventListener('click', () => allDOMElements['achievements-modal'].classList.add('hidden'));
+        DOMElements['start-game-btn'].addEventListener('click', () => { sounds.uiClick?.(); startGame(); });
+        
+        // Pencarian
+        ['desktop', 'mobile'].forEach(view => {
+            DOMElements[`search-bar-${view}`].addEventListener('input', () => updateShelf(view));
+            DOMElements[`grimoire-search-${view}`].addEventListener('input', () => updateGrimoire(view));
+        });
+
+        // Drag & Drop
+        DOMElements['transmutation-circle'].addEventListener('dragover', e => { e.preventDefault(); DOMElements['transmutation-circle'].classList.add('active'); });
+        DOMElements['transmutation-circle'].addEventListener('dragleave', () => DOMElements['transmutation-circle'].classList.remove('active'));
+        DOMElements['transmutation-circle'].addEventListener('drop', handleDrop);
+        DOMElements['trash-can'].addEventListener('dragover', e => { e.preventDefault(); DOMElements['trash-can'].classList.add('bg-red-500/40'); });
+        DOMElements['trash-can'].addEventListener('dragleave', () => DOMElements['trash-can'].classList.remove('bg-red-500/40'));
+        DOMElements['trash-can'].addEventListener('drop', handleTrashDrop);
+
+        // Tombol
+        DOMElements['clear-slots-btn'].addEventListener('click', () => { sounds.uiClick?.(); resetCircle(); });
+        DOMElements['hint-btn'].addEventListener('click', () => { sounds.uiClick?.(); showHint(); });
+        DOMElements['restart-game-btn'].addEventListener('click', resetGame);
+        DOMElements['next-tutorial-btn'].addEventListener('click', nextTutorialStep);
+
+        // Toggle Modal
+        const modalToggles = {
+            'achievements-btn': 'achievements-modal', 'achievements-btn-mobile': 'achievements-modal',
+            'stats-btn': 'stats-modal', 'stats-btn-mobile': 'stats-modal',
+            'settings-btn': 'settings-modal', 'settings-btn-mobile': 'settings-modal',
+        };
+        for (const [btnId, modalId] of Object.entries(modalToggles)) {
+            DOMElements[btnId].addEventListener('click', () => { sounds.uiClick?.(); showModal(modalId); });
+        }
+        document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', () => { sounds.uiClick?.(); btn.closest('.modal').classList.add('hidden'); }));
+
+        // Pengaturan
+        DOMElements['reset-btn-settings'].addEventListener('click', resetGame);
+        DOMElements['music-toggle-btn-settings'].addEventListener('click', toggleMusic);
+        DOMElements['music-toggle-btn'].addEventListener('click', toggleMusic);
+
+        // Navigasi Mobile
+        document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                sounds.uiClick?.();
+                const view = e.currentTarget.dataset.view;
+                switchMobileView(view);
+            });
+        });
     };
 
     // --- Update UI ---
-    const updateProfileUI = () => {
-        allDOMElements['profile-avatar'].innerHTML = `<span class="text-4xl flex items-center justify-center h-full">${playerData.avatar}</span>`;
-        allDOMElements['profile-name'].textContent = playerData.name;
+    const updateAllUI = () => {
+        updateProfileUI();
+        updateShelf('desktop');
+        updateShelf('mobile');
+        updateGrimoire('desktop');
+        updateGrimoire('mobile');
+        updateProgressCounter();
+        updateMusicState();
+        updateStatsUI();
+        updateAchievementsUI();
+        setupSettingsModal();
     };
 
-    const updateShelf = () => {
-        const shelf = allDOMElements['element-shelf'];
+    const updateProfileUI = () => {
+        const views = ['desktop', 'mobile'];
+        views.forEach(view => {
+            DOMElements[`profile-avatar-${view}`].innerHTML = `<span class="text-4xl flex items-center justify-center h-full w-full">${playerData.avatar}</span>`;
+            DOMElements[`profile-name-${view}`].textContent = playerData.name;
+        });
+    };
+
+    const updateShelf = (view) => {
+        const shelf = DOMElements[`element-shelf-${view}`];
         shelf.innerHTML = '';
-        const searchTerm = allDOMElements['search-bar'].value.toLowerCase();
+        const searchTerm = DOMElements[`search-bar-${view}`].value.toLowerCase();
         
         const sortedDiscovered = [...playerData.discoveredElements].sort((a,b) => {
             const elA = elements[a]; const elB = elements[b];
@@ -422,122 +624,225 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         sortedDiscovered
-            .filter(id => elements[id].name.toLowerCase().includes(searchTerm))
+            .filter(id => elements[id].name.toLowerCase().includes(searchTerm) && !elements[id].isJunk)
             .forEach(id => {
                 const element = elements[id];
                 const elDiv = document.createElement('div');
-                elDiv.className = 'element flex flex-col items-center p-2 rounded-lg bg-gray-900/50';
+                elDiv.className = 'element flex flex-col items-center p-2 rounded-lg bg-gray-900/50 aspect-square justify-center';
                 elDiv.draggable = true;
                 elDiv.dataset.id = id;
-                elDiv.title = element.description; // Fitur baru: deskripsi saat hover
+                elDiv.innerHTML = `<div class="text-3xl sm:text-4xl">${element.icon}</div><span class="text-xs mt-1 text-center">${element.name}</span>`;
                 
-                elDiv.innerHTML = `
-                    <div class="w-12 h-12 flex items-center justify-center text-4xl">${element.icon}</div>
-                    <span class="text-xs mt-1 text-center">${element.name}</span>
-                `;
-                
-                elDiv.addEventListener('dragstart', e => { draggedElement = id; elDiv.classList.add('dragging'); });
-                elDiv.addEventListener('dragend', () => { draggedElement = null; elDiv.classList.remove('dragging'); });
+                elDiv.addEventListener('dragstart', e => { draggedElement = id; e.currentTarget.classList.add('dragging'); });
+                elDiv.addEventListener('dragend', e => { draggedElement = null; e.currentTarget.classList.remove('dragging'); });
                 shelf.appendChild(elDiv);
             });
     };
 
-    const updateGrimoire = () => {
-        const grimoire = allDOMElements['grimoire'];
+    const updateGrimoire = (view) => {
+        const grimoire = DOMElements[`grimoire-${view}`];
+        const searchTerm = DOMElements[`grimoire-search-${view}`].value.toLowerCase();
         grimoire.innerHTML = '';
-        allDOMElements['recipe-count'].textContent = `${Object.keys(playerData.discoveredRecipes).length}/${Object.keys(recipes).length}`;
+        DOMElements[`recipe-count-${view}`].textContent = `${Object.keys(playerData.discoveredRecipes).length}/${Object.keys(recipes).length}`;
 
         Object.keys(playerData.discoveredRecipes).sort().forEach(key => {
             const [id1, id2] = key.split(',');
             const resultId = playerData.discoveredRecipes[key];
+            const el1 = elements[id1], el2 = elements[id2], elRes = elements[resultId];
+            
+            if (!`${el1.name} ${el2.name} ${elRes.name}`.toLowerCase().includes(searchTerm)) return;
+
             const recipeDiv = document.createElement('div');
-            recipeDiv.className = 'flex items-center justify-between bg-gray-900/50 p-2 rounded-lg cursor-pointer hover:bg-purple-900/50 transition-colors';
+            recipeDiv.className = 'flex items-center justify-between bg-gray-900/50 p-2 rounded-lg';
             recipeDiv.innerHTML = `
-                <div class="flex items-center gap-1 text-2xl"><span title="${elements[id1].name}">${elements[id1].icon}</span><span class="text-yellow-400">+</span><span title="${elements[id2].name}">${elements[id2].icon}</span></div>
+                <div class="flex items-center gap-1 text-2xl"><span title="${el1.name}">${el1.icon}</span><span class="text-yellow-400">+</span><span title="${el2.name}">${el2.icon}</span></div>
                 <span class="text-xl text-yellow-400">→</span>
-                <div class="flex items-center gap-2"><span class="text-2xl" title="${elements[resultId].name}">${elements[resultId].icon}</span><span class="text-sm">${elements[resultId].name}</span></div>
+                <div class="flex items-center gap-2"><span class="text-2xl" title="${elRes.name}">${elRes.icon}</span><span class="text-sm">${elRes.name}</span></div>
             `;
-            // Fitur baru: Grimoire interaktif
-            recipeDiv.addEventListener('click', () => showInfoText(elements[resultId].description, false));
             grimoire.appendChild(recipeDiv);
         });
     };
     
     const updateProgressCounter = () => {
-        allDOMElements['progress-counter'].textContent = `Elemen Ditemukan: ${playerData.discoveredElements.length} / ${Object.keys(elements).length}`;
+        const count = playerData.discoveredElements.filter(id => !elements[id].isJunk).length;
+        const total = Object.keys(elements).filter(id => !elements[id].isJunk).length;
+        const text = `Elemen: ${count} / ${total}`;
+        DOMElements['progress-counter-desktop'].textContent = text;
+        DOMElements['progress-counter-mobile'].textContent = text;
     };
 
+    const updateStatsUI = () => {
+        const stats = playerData.stats;
+        DOMElements['stats-list'].innerHTML = `
+            <span class="text-gray-400">Total Kombinasi:</span> <span class="gold-text">${stats.combinations}</span>
+            <span class="text-gray-400">Berhasil:</span> <span class="text-green-400">${stats.successes}</span>
+            <span class="text-gray-400">Gagal:</span> <span class="text-red-400">${stats.failures}</span>
+            <span class="text-gray-400">Penemuan Baru:</span> <span class="text-blue-400">${stats.newDiscoveries}</span>
+        `;
+    };
+
+    const updateAchievementsUI = () => {
+        const list = DOMElements['achievements-list'];
+        list.innerHTML = Object.entries(achievements).map(([key, ach]) => `
+            <div class="glass-pane p-4 rounded-lg flex items-center gap-4 ${playerData.achievements[key].unlocked ? 'opacity-100' : 'opacity-40'}">
+                <div class="text-4xl">${playerData.achievements[key].unlocked ? '🏆' : '❓'}</div>
+                <div class="text-left">
+                    <h4 class="font-bold ${playerData.achievements[key].unlocked ? 'gold-text' : ''}">${ach.name}</h4>
+                    <p class="text-sm text-gray-400">${ach.desc}</p>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const setupWelcomeModal = () => {
+        DOMElements['avatar-selection'].innerHTML = avatars.map(av => 
+            `<div class="avatar-option p-2 rounded-full cursor-pointer bg-gray-900/50" data-avatar="${av}">
+                <span class="text-4xl">${av}</span>
+            </div>`
+        ).join('');
+
+        DOMElements['avatar-selection'].addEventListener('click', e => {
+            const target = e.target.closest('.avatar-option');
+            if (target) {
+                document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+                target.classList.add('selected');
+                playerData.avatar = target.dataset.avatar;
+                validateStartButton();
+            }
+        });
+        DOMElements['player-name-input'].addEventListener('input', validateStartButton);
+        validateStartButton();
+    };
+
+    const validateStartButton = () => {
+        const name = DOMElements['player-name-input'].value.trim();
+        const avatarSelected = document.querySelector('.avatar-option.selected');
+        DOMElements['start-game-btn'].disabled = !name || !avatarSelected;
+    };
+    
     // --- Logika Gameplay Inti ---
     const handleDrop = (e) => {
         e.preventDefault();
-        if (!draggedElement || droppedElements.length >= 2 || droppedElements.includes(draggedElement)) {
-            allDOMElements['transmutation-circle'].classList.remove('active');
+        DOMElements['transmutation-circle'].classList.remove('active');
+        if (!draggedElement || droppedElements.length >= 2 || (droppedElements.length === 1 && droppedElements[0] === draggedElement)) {
             return;
         }
-        if (soundsReady) dropSound();
+        sounds.drop?.();
         droppedElements.push(draggedElement);
         updateSlots();
         if (droppedElements.length === 2) setTimeout(performTransmutation, 500);
         draggedElement = null;
     };
+    
+    const handleTrashDrop = (e) => {
+        e.preventDefault();
+        DOMElements['trash-can'].classList.remove('bg-red-500/40');
+        if (draggedElement) {
+             const junkIndex = droppedElements.indexOf('junk');
+             if (junkIndex > -1) {
+                 droppedElements.splice(junkIndex, 1);
+                 updateSlots();
+             }
+        }
+    };
 
     const updateSlots = () => {
-        allDOMElements['slots'].innerHTML = droppedElements.map(id => `<div class="w-16 h-16 bg-gray-900/70 rounded-lg p-1 text-4xl flex items-center justify-center">${elements[id].icon}</div>`).join('');
-        allDOMElements['circle-content'].classList.toggle('opacity-0', droppedElements.length > 0);
-        allDOMElements['clear-slots-btn'].classList.toggle('hidden', droppedElements.length === 0);
+        DOMElements['slots'].innerHTML = droppedElements.map(id => {
+            const el = elements[id];
+            const elDiv = document.createElement('div');
+            elDiv.className = 'w-16 h-16 bg-gray-900/70 rounded-lg p-1 text-4xl flex items-center justify-center';
+            elDiv.innerHTML = el.icon;
+            elDiv.draggable = el.isJunk;
+            elDiv.dataset.id = id;
+            if (el.isJunk) {
+                elDiv.classList.add('cursor-grab');
+                elDiv.addEventListener('dragstart', (e) => {
+                    draggedElement = 'junk';
+                    DOMElements['trash-can'].classList.add('opacity-100');
+                    DOMElements['trash-can'].classList.remove('opacity-0');
+                });
+                elDiv.addEventListener('dragend', () => {
+                    draggedElement = null;
+                    DOMElements['trash-can'].classList.add('opacity-0');
+                    DOMElements['trash-can'].classList.remove('opacity-100');
+                });
+            }
+            return elDiv.outerHTML;
+        }).join('');
+        
+        DOMElements['circle-content'].classList.toggle('opacity-0', droppedElements.length > 0);
+        DOMElements['clear-slots-btn'].classList.toggle('hidden', droppedElements.length === 0);
     };
 
     const performTransmutation = () => {
-        const key = droppedElements.sort().join(',');
-        const resultId = recipes[key];
+        playerData.stats.combinations++;
+        const key1 = [...droppedElements].sort().join(',');
+        const key2 = [...droppedElements].reverse().join(','); // Cek urutan terbalik juga jika perlu
+        const resultId = recipes[key1] || recipes[key2];
+        
         createTransmutationParticles();
 
         setTimeout(() => {
             if (resultId) {
-                if (soundsReady) successSound();
-                showInfoText(`Berhasil! Menciptakan ${elements[resultId].name}.`, true);
+                playerData.stats.successes++;
+                sounds.success?.();
+                showInfoText(`Berhasil! Menciptakan ${elements[resultId].name}.`, 'success');
                 
                 const isNewDiscovery = !playerData.discoveredElements.includes(resultId);
                 if (isNewDiscovery) {
+                    playerData.stats.newDiscoveries++;
                     playerData.discoveredElements.push(resultId);
                     checkAchievements(resultId);
+                    if (resultId === 'philosophers_stone') {
+                        setTimeout(showWinScreen, 1500);
+                    }
                 }
-                playerData.discoveredRecipes[key] = resultId;
+                playerData.discoveredRecipes[key1] = resultId;
                 
-                updateShelf();
-                updateGrimoire();
+                updateShelf('desktop'); updateShelf('mobile');
+                updateGrimoire('desktop'); updateGrimoire('mobile');
                 updateProgressCounter();
-                saveProgress();
-                
-                if (resultId === 'philosophers_stone') {
-                    // Animasi Kemenangan
-                }
             } else {
-                if (soundsReady) failSound();
-                showInfoText("Kombinasi ini tidak menghasilkan apapun...", false);
+                playerData.stats.failures++;
+                sounds.fail?.();
+                showInfoText("Kombinasi ini menghasilkan Rongsokan...", 'fail');
+                droppedElements = ['junk']; // Ganti dengan elemen gagal
+                updateSlots();
             }
-            setTimeout(resetCircle, 2000);
+            
+            updateStatsUI();
+            saveProgress();
+            
+            if (resultId) {
+                setTimeout(resetCircle, 2000);
+            }
         }, 1000);
     };
 
     const resetCircle = () => {
         droppedElements = [];
         updateSlots();
-        allDOMElements['transmutation-circle'].classList.remove('active');
-        allDOMElements['info-text'].classList.add('opacity-0', 'translate-y-2');
+        DOMElements['transmutation-circle'].classList.remove('active');
+        DOMElements['info-text'].classList.add('opacity-0', 'translate-y-2');
     };
     
-    // --- Fitur Baru & Utilitas ---
-    const showInfoText = (text, isSuccess) => {
-        const info = allDOMElements['info-text'];
+    // --- Fitur & Utilitas ---
+    const showInfoText = (text, type) => {
+        const info = DOMElements['info-text'];
         info.textContent = text;
-        info.className = `text-lg font-semibold transition-all duration-300 ${isSuccess ? 'text-green-400' : 'text-red-400'}`;
+        const colorClass = type === 'success' ? `text-[var(--success-color)]` : (type === 'fail' ? `text-[var(--fail-color)]` : 'text-yellow-300');
+        info.className = `text-lg text-center font-semibold transition-all duration-300 ${colorClass}`;
         info.classList.remove('opacity-0', 'translate-y-2');
+    };
+    
+    const showModal = (modalId) => {
+        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+        DOMElements[modalId].classList.remove('hidden');
     };
 
     const resetGame = () => {
         if (confirm('Apakah Anda yakin ingin mereset semua progres? Ini tidak bisa dibatalkan.')) {
-            localStorage.removeItem('alchemyV2Data');
+            localStorage.removeItem('alchemyV3Data');
             location.reload();
         }
     };
@@ -548,86 +853,146 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         if (possibleHints.length > 0) {
             const [ing1, ing2] = possibleHints[Math.floor(Math.random() * possibleHints.length)].split(',');
-            document.querySelectorAll('.element').forEach(el => el.style.borderColor = 'transparent');
-            const hintElements = document.querySelectorAll(`[data-id="${ing1}"], [data-id="${ing2}"]`);
-            hintElements.forEach(el => el.style.borderColor = 'var(--secondary-glow)');
-            showInfoText("Perhatikan elemen yang bersinar...", true);
+            showInfoText(`Coba gabungkan ${elements[ing1].name} dengan sesuatu...`, 'hint');
+            
+            document.querySelectorAll('.element').forEach(el => el.classList.remove('hint'));
             setTimeout(() => {
-                hintElements.forEach(el => el.style.borderColor = 'transparent');
-                if (droppedElements.length === 0) allDOMElements['info-text'].classList.add('opacity-0');
+                document.querySelectorAll(`.element[data-id="${ing1}"], .element[data-id="${ing2}"]`).forEach(el => el.classList.add('hint'));
+            }, 100);
+
+            setTimeout(() => {
+                document.querySelectorAll('.element').forEach(el => el.classList.remove('hint'));
+                 if (droppedElements.length === 0) DOMElements['info-text'].classList.add('opacity-0');
             }, 4000);
         } else {
-            showInfoText("Tidak ada petunjuk. Coba temukan elemen baru!", false);
+            showInfoText("Tidak ada petunjuk. Coba temukan elemen baru!", 'fail');
         }
     };
 
     const toggleMusic = () => {
+        sounds.uiClick?.();
         playerData.musicOn = !playerData.musicOn;
         updateMusicState();
         saveProgress();
     };
 
     const updateMusicState = () => {
+        const musicOnIcon = '🎶';
+        const musicOffIcon = '🎵';
         if (playerData.musicOn) {
-            allDOMElements['bg-music'].play().catch(e => console.log("Playback failed:", e));
-            allDOMElements['music-toggle-btn'].textContent = '🎶';
+            DOMElements['bg-music'].play().catch(e => console.log("Playback failed:", e));
+            DOMElements['music-toggle-btn'].textContent = musicOnIcon;
+            DOMElements['music-toggle-btn-settings'].textContent = musicOnIcon;
         } else {
-            allDOMElements['bg-music'].pause();
-            allDOMElements['music-toggle-btn'].textContent = '🎵';
+            DOMElements['bg-music'].pause();
+            DOMElements['music-toggle-btn'].textContent = musicOffIcon;
+            DOMElements['music-toggle-btn-settings'].textContent = musicOffIcon;
         }
     };
 
     const checkAchievements = (newElementId) => {
-        let newAchievementUnlocked = false;
-        Object.keys(playerData.achievements).forEach(key => {
-            const ach = playerData.achievements[key];
-            if (!ach.unlocked) {
+        Object.entries(achievements).forEach(([key, ach]) => {
+            if (!playerData.achievements[key].unlocked) {
                 let conditionMet = false;
                 if (ach.threshold) {
-                    conditionMet = playerData.discoveredElements.length >= ach.threshold;
+                    const count = playerData.discoveredElements.filter(id => !elements[id].isJunk).length;
+                    conditionMet = count >= ach.threshold;
                 } else if (ach.element) {
                     conditionMet = newElementId === ach.element;
                 }
                 if (conditionMet) {
-                    ach.unlocked = true;
+                    playerData.achievements[key].unlocked = true;
                     showAchievementToast(ach);
-                    newAchievementUnlocked = true;
+                    updateAchievementsUI();
+                    saveProgress();
                 }
             }
         });
-        if (newAchievementUnlocked) saveProgress();
     };
     
     const showAchievementToast = (achievement) => {
-        const toast = allDOMElements['achievement-toast'];
-        allDOMElements['toast-name'].textContent = achievement.name;
-        allDOMElements['toast-desc'].textContent = achievement.desc;
+        const toast = DOMElements['achievement-toast'];
+        DOMElements['toast-name'].textContent = achievement.name;
+        DOMElements['toast-desc'].textContent = achievement.desc;
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 5000);
     };
+
+    const switchMobileView = (view) => {
+        ['rak', 'alkimia', 'grimoire'].forEach(v => {
+            DOMElements[`mobile-${v}`].classList.add('hidden');
+        });
+        DOMElements[`mobile-${view}`].classList.remove('hidden');
+
+        document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+            if (btn.dataset.view === view) {
+                btn.classList.add('text-yellow-400');
+                btn.classList.remove('text-purple-400');
+            } else {
+                btn.classList.remove('text-yellow-400');
+                btn.classList.add('text-purple-400');
+            }
+        });
+    };
     
-    const showAchievementsModal = () => {
-        const list = allDOMElements['achievements-list'];
-        list.innerHTML = Object.values(playerData.achievements).map(ach => `
-            <div class="glass-pane p-4 rounded-lg flex items-center gap-4 ${ach.unlocked ? 'opacity-100' : 'opacity-40'}">
-                <div class="text-4xl">${ach.unlocked ? '🏆' : '❓'}</div>
-                <div class="text-left">
-                    <h4 class="font-bold ${ach.unlocked ? 'gold-text' : ''}">${ach.name}</h4>
-                    <p class="text-sm text-gray-400">${ach.desc}</p>
+    const setupSettingsModal = () => {
+        DOMElements['theme-selection'].innerHTML = Object.entries(themes).map(([key, theme]) => `
+            <button data-theme="${key}" class="theme-btn p-2 rounded-lg border-2 ${playerData.settings.theme === key ? 'border-yellow-400' : 'border-gray-600'}">
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full" style="background-color: ${theme.primary};"></div>
+                    <div class="w-5 h-5 rounded-full" style="background-color: ${theme.secondary};"></div>
                 </div>
-            </div>
+                <span class="text-xs mt-1">${theme.name}</span>
+            </button>
         `).join('');
-        allDOMElements['achievements-modal'].classList.remove('hidden');
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const themeKey = e.currentTarget.dataset.theme;
+                applyTheme(themeKey);
+                playerData.settings.theme = themeKey;
+                saveProgress();
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('border-yellow-400'));
+                e.currentTarget.classList.add('border-yellow-400');
+            });
+        });
+    };
+    
+    const applyTheme = (themeKey) => {
+        const theme = themes[themeKey];
+        const root = document.documentElement;
+        root.style.setProperty('--primary-glow', theme.primary);
+        root.style.setProperty('--secondary-glow', theme.secondary);
+    };
+    
+    const checkDailyBonus = () => {
+        const today = new Date().toDateString();
+        if (playerData.lastLogin !== today) {
+            playerData.lastLogin = today;
+            const possibleHints = Object.keys(recipes).filter(key => 
+                !playerData.discoveredRecipes[key] && key.split(',').every(ing => playerData.discoveredElements.includes(ing))
+            );
+            if(possibleHints.length > 0) {
+                 const [ing1, ing2] = possibleHints[Math.floor(Math.random() * possibleHints.length)].split(',');
+                 DOMElements['daily-hint'].innerHTML = `<span>${elements[ing1].icon}</span> + <span>${elements[ing2].icon}</span> = <span>❓</span>`;
+                 showModal('daily-bonus-modal');
+            }
+            saveProgress();
+        }
+    };
+    
+    const showWinScreen = () => {
+        DOMElements['win-screen'].classList.remove('hidden');
+        DOMElements['win-screen'].classList.add('flex');
     };
 
+    // --- Efek Visual ---
     const createParticleBackground = () => {
-        const container = document.getElementById('particle-container');
         for (let i = 0; i < 30; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             const size = Math.random() * 5 + 1;
             p.style.cssText = `width:${size}px; height:${size}px; left:${Math.random()*100}%; animation-delay:${Math.random()*20}s; animation-duration:${Math.random()*10+15}s;`;
-            container.appendChild(p);
+            DOMElements['particle-container'].appendChild(p);
         }
     };
     
@@ -636,16 +1001,79 @@ document.addEventListener('DOMContentLoaded', () => {
             const p = document.createElement('div');
             p.className = 'transmutation-particle';
             const angle = Math.random() * 2 * Math.PI;
-            const radius = Math.random() * 120 + 20;
+            const radius = Math.random() * 140 + 30;
             p.style.setProperty('--tx', `${Math.cos(angle) * radius}px`);
             p.style.setProperty('--ty', `${Math.sin(angle) * radius}px`);
-            allDOMElements['transmutation-circle'].appendChild(p);
+            DOMElements['transmutation-circle'].appendChild(p);
             setTimeout(() => p.remove(), 1500);
         }
     };
 
+    // --- Tutorial ---
+    let tutorialStep = 0;
+    const tutorialSteps = [
+        { text: "Selamat datang di Laboratorium Alkimia! Mari kita coba buat kombinasi pertama.", target: null },
+        { text: "Seret elemen 'Api' dari rak elemen di sebelah kiri.", target: '.element[data-id="fire"]' },
+        { text: "Letakkan elemen 'Api' ke dalam Lingkaran Transmutasi di tengah.", target: '#transmutation-circle' },
+        { text: "Bagus! Sekarang, seret elemen 'Air' ke lingkaran juga.", target: '.element[data-id="water"]' },
+        { text: "Lihat! Api dan Air menghasilkan Uap! Elemen baru telah ditambahkan ke rak-mu.", target: '#element-shelf-desktop' },
+        { text: "Resep yang kamu temukan akan tercatat di Grimoire. Sekarang kamu siap bereksperimen sendiri. Selamat mencoba!", target: null }
+    ];
+
+    const startTutorial = () => {
+        tutorialStep = 0;
+        DOMElements['tutorial-overlay'].classList.remove('hidden');
+        showTutorialStep();
+    };
+
+    const showTutorialStep = () => {
+        if (tutorialStep >= tutorialSteps.length) {
+            endTutorial();
+            return;
+        }
+        const step = tutorialSteps[tutorialStep];
+        DOMElements['tutorial-text'].textContent = step.text;
+        
+        document.querySelectorAll('.tutorial-highlight').forEach(el => el.remove());
+
+        if (step.target) {
+            const targetElement = document.querySelector(step.target);
+            if (targetElement) {
+                const rect = targetElement.getBoundingClientRect();
+                const highlight = document.createElement('div');
+                highlight.className = 'tutorial-highlight';
+                highlight.style.cssText = `
+                    position: fixed;
+                    left: ${rect.left - 5}px;
+                    top: ${rect.top - 5}px;
+                    width: ${rect.width + 10}px;
+                    height: ${rect.height + 10}px;
+                    border: 3px dashed var(--secondary-glow);
+                    border-radius: 10px;
+                    pointer-events: none;
+                    z-index: 45;
+                    box-shadow: 0 0 20px var(--secondary-glow);
+                `;
+                document.body.appendChild(highlight);
+            }
+        }
+    };
+
+    const nextTutorialStep = () => {
+        tutorialStep++;
+        showTutorialStep();
+    };
+
+    const endTutorial = () => {
+        DOMElements['tutorial-overlay'].classList.add('hidden');
+        document.querySelectorAll('.tutorial-highlight').forEach(el => el.remove());
+        playerData.tutorialCompleted = true;
+        saveProgress();
+    };
+
+    // --- Mulai Game ---
     init();
 });
 </script>
-
 </html>
+
