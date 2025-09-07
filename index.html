@@ -63,12 +63,12 @@
         }
 
         /* --- Lingkaran Transmutasi --- */
-        #transmutation-circle {
+        .transmutation-circle {
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
             border: 4px solid color-mix(in srgb, var(--primary-glow), #4a044e 50%);
             box-shadow: 0 0 15px var(--primary-glow), 0 0 30px var(--primary-glow), inset 0 0 15px var(--primary-glow);
         }
-        #transmutation-circle.active {
+        .transmutation-circle.active {
             transform: scale(1.05);
             border-color: var(--secondary-glow);
             box-shadow: 0 0 25px var(--secondary-glow), 0 0 50px var(--secondary-glow), inset 0 0 25px var(--secondary-glow);
@@ -87,6 +87,7 @@
         /* --- Elemen & Interaksi --- */
         .element {
             cursor: grab;
+            touch-action: none; /* Mencegah scrolling saat drag di mobile */
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
             border: 2px solid transparent;
         }
@@ -97,12 +98,16 @@
             border-color: color-mix(in srgb, var(--secondary-glow), transparent 50%);
         }
         .element.dragging { cursor: grabbing; opacity: 0.5; transform: scale(1.2); }
-        .element.hint {
-            animation: hint-glow 2s infinite;
-        }
+        .element.hint { animation: hint-glow 2s infinite; }
         @keyframes hint-glow {
             0%, 100% { border-color: color-mix(in srgb, var(--secondary-glow), transparent 50%); box-shadow: 0 0 15px color-mix(in srgb, var(--secondary-glow), transparent 30%); }
             50% { border-color: var(--secondary-glow); box-shadow: 0 0 25px var(--secondary-glow); }
+        }
+        #touch-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.8;
         }
 
         /* --- Modal & Animasi UI --- */
@@ -126,7 +131,6 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-glow); }
 
         /* --- Tata Letak Responsif --- */
-        .mobile-view { display: none; }
         @media (max-width: 1023px) {
             .desktop-view { display: none; }
             .mobile-view { display: flex; }
@@ -174,7 +178,7 @@
         <!-- ================================= -->
         <!-- ====== TAMPILAN DESKTOP ========= -->
         <!-- ================================= -->
-        <div class="desktop-view hidden lg:grid lg:grid-cols-3 h-full gap-4 items-start max-h-screen py-2">
+        <div class="desktop-view hidden lg:grid lg:grid-cols-3 h-full gap-4 items-start max-h-[96vh] py-2">
             <!-- Kolom Kiri: Rak Elemen & Profil -->
             <div class="glass-pane rounded-2xl p-4 flex flex-col h-full max-h-[96vh]">
                 <div class="flex items-center gap-4 border-b-2 border-yellow-400/30 pb-3 mb-3">
@@ -191,16 +195,16 @@
             <!-- Kolom Tengah: Area Alkimia -->
             <div class="flex flex-col items-center justify-center h-full max-h-[96vh]">
                 <h1 class="font-cinzel text-3xl md:text-5xl text-center tracking-widest text-purple-300 mb-6">Laboratorium Alkimia</h1>
-                <div id="transmutation-circle" class="w-56 h-56 md:w-80 md:h-80 rounded-full flex items-center justify-center p-4 relative">
-                     <div id="circle-content" class="text-center text-gray-400 transition-opacity">
+                <div id="transmutation-circle-desktop" class="transmutation-circle w-56 h-56 md:w-80 md:h-80 rounded-full flex items-center justify-center p-4 relative">
+                     <div class="circle-content text-center text-gray-400 transition-opacity">
                         <p class="font-cinzel text-lg">Tempatkan Elemen</p>
                     </div>
-                    <div id="slots" class="absolute flex justify-center items-center gap-4"></div>
+                    <div class="slots absolute flex justify-center items-center gap-4"></div>
                 </div>
                 <div class="h-24 mt-6 flex flex-col items-center justify-center">
-                     <p id="info-text" class="text-lg text-center font-semibold transition-all duration-300 opacity-0 transform translate-y-2"></p>
-                     <div id="trash-can" class="mt-4 text-4xl opacity-0 transition-opacity cursor-pointer p-2 rounded-full hover:bg-red-500/20">🗑️</div>
-                     <button id="clear-slots-btn" class="hidden mt-2 bg-red-800/80 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors">Kosongkan</button>
+                     <p class="info-text text-lg text-center font-semibold transition-all duration-300 opacity-0 transform translate-y-2"></p>
+                     <div class="trash-can mt-4 text-4xl opacity-0 transition-opacity cursor-pointer p-2 rounded-full hover:bg-red-500/20">🗑️</div>
+                     <button class="clear-slots-btn hidden mt-2 bg-red-800/80 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors">Kosongkan</button>
                 </div>
             </div>
             
@@ -226,7 +230,7 @@
         <!-- ================================= -->
         <!-- ====== TAMPILAN MOBILE ========== -->
         <!-- ================================= -->
-        <div class="mobile-view flex-col h-full w-full">
+        <div class="mobile-view hidden flex-col h-full w-full">
             <!-- Header Mobile -->
             <div class="glass-pane rounded-xl p-2 flex items-center gap-2 mb-2">
                 <div id="profile-avatar-mobile" class="w-12 h-12 rounded-full bg-gray-900 border-2 border-yellow-400 flex-shrink-0"></div>
@@ -244,7 +248,19 @@
             <!-- Konten Utama Mobile (Switchable) -->
             <div class="main-content-area flex-grow relative">
                 <div id="mobile-alkimia" class="w-full h-full flex flex-col items-center justify-center p-2">
-                    <!-- Area Alkimia untuk mobile, sama seperti desktop tapi di sini -->
+                    <!-- Area Alkimia untuk mobile, diduplikasi dari desktop -->
+                    <h1 class="font-cinzel text-3xl text-center tracking-widest text-purple-300 mb-4">Alkimia</h1>
+                    <div id="transmutation-circle-mobile" class="transmutation-circle w-56 h-56 rounded-full flex items-center justify-center p-4 relative">
+                         <div class="circle-content text-center text-gray-400 transition-opacity">
+                            <p class="font-cinzel text-lg">Tempatkan Elemen</p>
+                        </div>
+                        <div class="slots absolute flex justify-center items-center gap-4"></div>
+                    </div>
+                    <div class="h-24 mt-4 flex flex-col items-center justify-center">
+                         <p class="info-text text-lg text-center font-semibold transition-all duration-300 opacity-0 transform translate-y-2"></p>
+                         <div class="trash-can mt-4 text-4xl opacity-0 transition-opacity cursor-pointer p-2 rounded-full hover:bg-red-500/20">🗑️</div>
+                         <button class="clear-slots-btn hidden mt-2 bg-red-800/80 text-white px-4 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors">Kosongkan</button>
+                    </div>
                 </div>
                 <div id="mobile-rak" class="hidden w-full h-full flex flex-col p-2 bg-black/50 rounded-lg">
                     <input type="text" id="search-bar-mobile" class="w-full bg-gray-900/80 border border-purple-800 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-yellow-400 mb-3" placeholder="Cari elemen...">
@@ -318,6 +334,18 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal Konfirmasi Reset -->
+    <div id="reset-confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="modal-card glass-pane rounded-2xl p-8 text-center w-11/12 max-w-md">
+            <h2 class="font-cinzel text-2xl gold-text mb-4">Anda Yakin?</h2>
+            <p class="text-gray-400 mb-8">Semua progres akan dihapus secara permanen. Tindakan ini tidak bisa dibatalkan.</p>
+            <div class="flex justify-center gap-4">
+                <button id="confirm-reset-btn" class="font-bold bg-red-700 text-white py-2 px-8 rounded-lg hover:bg-red-600 transition-colors">Ya, Hapus</button>
+                <button id="cancel-reset-btn" class="font-bold bg-gray-600 text-white py-2 px-8 rounded-lg hover:bg-gray-500 transition-colors">Batal</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Bonus Harian -->
     <div id="daily-bonus-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -351,7 +379,7 @@
 
 </body>
 <script>
-// --- Script Utama Laboratorium Alkimia V3 ---
+// --- Script Utama Laboratorium Alkimia V3 (Diperbaiki) ---
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Data Game: Elemen, Resep, Pencapaian, Tema ---
@@ -361,7 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'fire': { name: 'Api', icon: '🔥', tier: 0 }, 'water': { name: 'Air', icon: '💧', tier: 0 },
         // Tier 1
         'steam': { name: 'Uap', icon: '💨', tier: 1 }, 'lava': { name: 'Lava', icon: '🌋', tier: 1 },
-        'dust': { name: 'Debu', icon: ' bụi ', tier: 1 }, 'mud': { name: 'Lumpur', icon: '🟤', tier: 1 },
+        'dust': { name: 'Debu', icon: '✨', tier: 1 }, // BUGFIX: Ikon diperbaiki
+        'mud': { name: 'Lumpur', icon: '🟤', tier: 1 },
         'energy': { name: 'Energi', icon: '⚡', tier: 1 }, 'mist': { name: 'Kabut', icon: '🌫️', tier: 1 },
         // Tier 2
         'stone': { name: 'Batu', icon: '🗿', tier: 2 }, 'clay': { name: 'Tanah Liat', icon: '🏺', tier: 2 },
@@ -443,8 +472,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tutorialCompleted: false,
     };
 
-    let draggedElement = null;
+    let draggedElementId = null;
     let droppedElements = [];
+    let touchDraggableClone = null; // Untuk klon elemen saat disentuh
 
     // --- Cache Elemen DOM ---
     const DOMElements = {};
@@ -453,9 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'welcome-modal', 'player-name-input', 'avatar-selection', 'start-game-btn', 
             'game-container', 'profile-avatar-desktop', 'profile-name-desktop', 'progress-counter-desktop', 
             'search-bar-desktop', 'element-shelf-desktop', 'grimoire-desktop', 'recipe-count-desktop', 
-            'grimoire-search-desktop', 'transmutation-circle', 'circle-content', 'slots', 
-            'info-text', 'trash-can', 'clear-slots-btn', 'music-toggle-btn', 'hint-btn', 
-            'stats-btn', 'achievements-btn', 'settings-btn', 'reset-btn',
+            'grimoire-search-desktop', 
+            'music-toggle-btn', 'hint-btn', 'stats-btn', 'achievements-btn', 'settings-btn', 'reset-btn',
             'profile-avatar-mobile', 'profile-name-mobile', 'progress-counter-mobile', 
             'stats-btn-mobile', 'achievements-btn-mobile', 'settings-btn-mobile', 'mobile-alkimia',
             'mobile-rak', 'search-bar-mobile', 'element-shelf-mobile', 'mobile-grimoire',
@@ -464,9 +493,14 @@ document.addEventListener('DOMContentLoaded', () => {
             'settings-modal', 'theme-selection', 'music-toggle-btn-settings', 'reset-btn-settings',
             'achievement-toast', 'toast-name', 'toast-desc', 'bg-music', 'win-screen', 'restart-game-btn',
             'daily-bonus-modal', 'daily-hint', 'tutorial-overlay', 'tutorial-box', 'tutorial-text', 'next-tutorial-btn',
-            'particle-container'
+            'particle-container', 'reset-confirm-modal', 'confirm-reset-btn', 'cancel-reset-btn'
         ];
         ids.forEach(id => DOMElements[id] = document.getElementById(id));
+
+        // Cache elemen yang diduplikasi menggunakan querySelectorAll
+        DOMElements.transmutationCircles = document.querySelectorAll('.transmutation-circle');
+        DOMElements.trashCans = document.querySelectorAll('.trash-can');
+        DOMElements.clearSlotsBtns = document.querySelectorAll('.clear-slots-btn');
     };
 
     // --- Manajemen Suara ---
@@ -526,9 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOMElements['welcome-modal'].classList.add('hidden');
         DOMElements['game-container'].classList.remove('hidden');
         
-        // Pindahkan elemen Alkimia ke kontainer mobile
-        const alchemyContent = [DOMElements['transmutation-circle'].parentElement.querySelector('h1'), DOMElements['transmutation-circle'], DOMElements['transmutation-circle'].parentElement.querySelector('.h-24')];
-        DOMElements['mobile-alkimia'].append(...alchemyContent);
+        // BUGFIX: Tidak perlu lagi memindahkan elemen karena sudah diduplikasi di HTML
         
         updateAllUI();
         saveProgress();
@@ -550,17 +582,26 @@ document.addEventListener('DOMContentLoaded', () => {
             DOMElements[`grimoire-search-${view}`].addEventListener('input', () => updateGrimoire(view));
         });
 
-        // Drag & Drop
-        DOMElements['transmutation-circle'].addEventListener('dragover', e => { e.preventDefault(); DOMElements['transmutation-circle'].classList.add('active'); });
-        DOMElements['transmutation-circle'].addEventListener('dragleave', () => DOMElements['transmutation-circle'].classList.remove('active'));
-        DOMElements['transmutation-circle'].addEventListener('drop', handleDrop);
-        DOMElements['trash-can'].addEventListener('dragover', e => { e.preventDefault(); DOMElements['trash-can'].classList.add('bg-red-500/40'); });
-        DOMElements['trash-can'].addEventListener('dragleave', () => DOMElements['trash-can'].classList.remove('bg-red-500/40'));
-        DOMElements['trash-can'].addEventListener('drop', handleTrashDrop);
+        // Drag & Drop untuk semua lingkaran transmutasi
+        DOMElements.transmutationCircles.forEach(circle => {
+            circle.addEventListener('dragover', e => { e.preventDefault(); circle.classList.add('active'); });
+            circle.addEventListener('dragleave', () => circle.classList.remove('active'));
+            circle.addEventListener('drop', handleDrop);
+        });
+
+        DOMElements.trashCans.forEach(trash => {
+            trash.addEventListener('dragover', e => { e.preventDefault(); trash.classList.add('bg-red-500/40'); });
+            trash.addEventListener('dragleave', () => trash.classList.remove('bg-red-500/40'));
+            trash.addEventListener('drop', handleTrashDrop);
+        });
 
         // Tombol
-        DOMElements['clear-slots-btn'].addEventListener('click', () => { sounds.uiClick?.(); resetCircle(); });
+        DOMElements.clearSlotsBtns.forEach(btn => btn.addEventListener('click', () => { sounds.uiClick?.(); resetCircle(); }));
         DOMElements['hint-btn'].addEventListener('click', () => { sounds.uiClick?.(); showHint(); });
+        DOMElements['reset-btn'].addEventListener('click', showResetConfirmation);
+        DOMElements['reset-btn-settings'].addEventListener('click', showResetConfirmation);
+        DOMElements['confirm-reset-btn'].addEventListener('click', resetGame);
+        DOMElements['cancel-reset-btn'].addEventListener('click', () => DOMElements['reset-confirm-modal'].classList.add('hidden'));
         DOMElements['restart-game-btn'].addEventListener('click', resetGame);
         DOMElements['next-tutorial-btn'].addEventListener('click', nextTutorialStep);
 
@@ -571,12 +612,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'settings-btn': 'settings-modal', 'settings-btn-mobile': 'settings-modal',
         };
         for (const [btnId, modalId] of Object.entries(modalToggles)) {
-            DOMElements[btnId].addEventListener('click', () => { sounds.uiClick?.(); showModal(modalId); });
+            DOMElements[btnId]?.addEventListener('click', () => { sounds.uiClick?.(); showModal(modalId); });
         }
         document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', () => { sounds.uiClick?.(); btn.closest('.modal').classList.add('hidden'); }));
 
         // Pengaturan
-        DOMElements['reset-btn-settings'].addEventListener('click', resetGame);
         DOMElements['music-toggle-btn-settings'].addEventListener('click', toggleMusic);
         DOMElements['music-toggle-btn'].addEventListener('click', toggleMusic);
 
@@ -602,11 +642,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatsUI();
         updateAchievementsUI();
         setupSettingsModal();
+        switchMobileView('alkimia'); // Mulai dari view alkimia di mobile
     };
 
     const updateProfileUI = () => {
-        const views = ['desktop', 'mobile'];
-        views.forEach(view => {
+        ['desktop', 'mobile'].forEach(view => {
             DOMElements[`profile-avatar-${view}`].innerHTML = `<span class="text-4xl flex items-center justify-center h-full w-full">${playerData.avatar}</span>`;
             DOMElements[`profile-name-${view}`].textContent = playerData.name;
         });
@@ -633,12 +673,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 elDiv.dataset.id = id;
                 elDiv.innerHTML = `<div class="text-3xl sm:text-4xl">${element.icon}</div><span class="text-xs mt-1 text-center">${element.name}</span>`;
                 
-                elDiv.addEventListener('dragstart', e => { draggedElement = id; e.currentTarget.classList.add('dragging'); });
-                elDiv.addEventListener('dragend', e => { draggedElement = null; e.currentTarget.classList.remove('dragging'); });
+                // Event listeners untuk mouse (desktop)
+                elDiv.addEventListener('dragstart', e => { draggedElementId = id; e.currentTarget.classList.add('dragging'); });
+                elDiv.addEventListener('dragend', e => { draggedElementId = null; e.currentTarget.classList.remove('dragging'); });
+                
+                // Event listeners untuk touch (mobile)
+                elDiv.addEventListener('touchstart', handleTouchStart, { passive: false });
+
                 shelf.appendChild(elDiv);
             });
     };
-
+    
     const updateGrimoire = (view) => {
         const grimoire = DOMElements[`grimoire-${view}`];
         const searchTerm = DOMElements[`grimoire-search-${view}`].value.toLowerCase();
@@ -723,21 +768,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Logika Gameplay Inti ---
     const handleDrop = (e) => {
         e.preventDefault();
-        DOMElements['transmutation-circle'].classList.remove('active');
-        if (!draggedElement || droppedElements.length >= 2 || (droppedElements.length === 1 && droppedElements[0] === draggedElement)) {
+        DOMElements.transmutationCircles.forEach(c => c.classList.remove('active'));
+        if (!draggedElementId || droppedElements.length >= 2 || (droppedElements.length === 1 && droppedElements[0] === draggedElementId)) {
             return;
         }
         sounds.drop?.();
-        droppedElements.push(draggedElement);
+        droppedElements.push(draggedElementId);
         updateSlots();
         if (droppedElements.length === 2) setTimeout(performTransmutation, 500);
-        draggedElement = null;
+        draggedElementId = null;
     };
     
     const handleTrashDrop = (e) => {
         e.preventDefault();
-        DOMElements['trash-can'].classList.remove('bg-red-500/40');
-        if (draggedElement) {
+        DOMElements.trashCans.forEach(t => t.classList.remove('bg-red-500/40'));
+        if (draggedElementId) {
              const junkIndex = droppedElements.indexOf('junk');
              if (junkIndex > -1) {
                  droppedElements.splice(junkIndex, 1);
@@ -747,40 +792,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateSlots = () => {
-        DOMElements['slots'].innerHTML = droppedElements.map(id => {
+        const slotsHTML = droppedElements.map(id => {
             const el = elements[id];
-            const elDiv = document.createElement('div');
-            elDiv.className = 'w-16 h-16 bg-gray-900/70 rounded-lg p-1 text-4xl flex items-center justify-center';
-            elDiv.innerHTML = el.icon;
-            elDiv.draggable = el.isJunk;
-            elDiv.dataset.id = id;
-            if (el.isJunk) {
-                elDiv.classList.add('cursor-grab');
-                elDiv.addEventListener('dragstart', (e) => {
-                    draggedElement = 'junk';
-                    DOMElements['trash-can'].classList.add('opacity-100');
-                    DOMElements['trash-can'].classList.remove('opacity-0');
-                });
-                elDiv.addEventListener('dragend', () => {
-                    draggedElement = null;
-                    DOMElements['trash-can'].classList.add('opacity-0');
-                    DOMElements['trash-can'].classList.remove('opacity-100');
-                });
-            }
-            return elDiv.outerHTML;
+            return `<div class="w-16 h-16 bg-gray-900/70 rounded-lg p-1 text-4xl flex items-center justify-center ${el.isJunk ? 'cursor-grab' : ''}" draggable="${el.isJunk}" data-id="${id}">${el.icon}</div>`;
         }).join('');
         
-        DOMElements['circle-content'].classList.toggle('opacity-0', droppedElements.length > 0);
-        DOMElements['clear-slots-btn'].classList.toggle('hidden', droppedElements.length === 0);
+        document.querySelectorAll('.slots').forEach(slotContainer => {
+            slotContainer.innerHTML = slotsHTML;
+        });
+
+        document.querySelectorAll('.circle-content').forEach(cc => cc.classList.toggle('opacity-0', droppedElements.length > 0));
+        DOMElements.clearSlotsBtns.forEach(btn => btn.classList.toggle('hidden', droppedElements.length === 0));
     };
 
     const performTransmutation = () => {
         playerData.stats.combinations++;
         const key1 = [...droppedElements].sort().join(',');
-        const key2 = [...droppedElements].reverse().join(','); // Cek urutan terbalik juga jika perlu
-        const resultId = recipes[key1] || recipes[key2];
+        const resultId = recipes[key1];
         
-        createTransmutationParticles();
+        DOMElements.transmutationCircles.forEach(c => createTransmutationParticles(c));
 
         setTimeout(() => {
             if (resultId) {
@@ -822,29 +852,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetCircle = () => {
         droppedElements = [];
         updateSlots();
-        DOMElements['transmutation-circle'].classList.remove('active');
-        DOMElements['info-text'].classList.add('opacity-0', 'translate-y-2');
+        DOMElements.transmutationCircles.forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.info-text').forEach(info => info.classList.add('opacity-0', 'translate-y-2'));
     };
     
     // --- Fitur & Utilitas ---
     const showInfoText = (text, type) => {
-        const info = DOMElements['info-text'];
-        info.textContent = text;
         const colorClass = type === 'success' ? `text-[var(--success-color)]` : (type === 'fail' ? `text-[var(--fail-color)]` : 'text-yellow-300');
-        info.className = `text-lg text-center font-semibold transition-all duration-300 ${colorClass}`;
-        info.classList.remove('opacity-0', 'translate-y-2');
+        
+        document.querySelectorAll('.info-text').forEach(info => {
+            info.textContent = text;
+            info.className = `info-text text-lg text-center font-semibold transition-all duration-300 ${colorClass}`;
+            info.classList.remove('opacity-0', 'translate-y-2');
+        });
     };
     
     const showModal = (modalId) => {
         document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
         DOMElements[modalId].classList.remove('hidden');
     };
+    
+    const showResetConfirmation = () => {
+        sounds.uiClick?.();
+        showModal('reset-confirm-modal');
+    };
 
     const resetGame = () => {
-        if (confirm('Apakah Anda yakin ingin mereset semua progres? Ini tidak bisa dibatalkan.')) {
-            localStorage.removeItem('alchemyV3Data');
-            location.reload();
-        }
+        localStorage.removeItem('alchemyV3Data');
+        location.reload();
     };
     
     const showHint = () => {
@@ -862,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => {
                 document.querySelectorAll('.element').forEach(el => el.classList.remove('hint'));
-                 if (droppedElements.length === 0) DOMElements['info-text'].classList.add('opacity-0');
+                 if (droppedElements.length === 0) document.querySelectorAll('.info-text').forEach(info => info.classList.add('opacity-0'));
             }, 4000);
         } else {
             showInfoText("Tidak ada petunjuk. Coba temukan elemen baru!", 'fail');
@@ -996,27 +1031,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    const createTransmutationParticles = () => {
+    const createTransmutationParticles = (circleElement) => {
         for (let i = 0; i < 20; i++) {
             const p = document.createElement('div');
             p.className = 'transmutation-particle';
             const angle = Math.random() * 2 * Math.PI;
-            const radius = Math.random() * 140 + 30;
+            const radius = Math.random() * (circleElement.offsetWidth / 2.5) + (circleElement.offsetWidth / 5);
             p.style.setProperty('--tx', `${Math.cos(angle) * radius}px`);
             p.style.setProperty('--ty', `${Math.sin(angle) * radius}px`);
-            DOMElements['transmutation-circle'].appendChild(p);
+            circleElement.appendChild(p);
             setTimeout(() => p.remove(), 1500);
         }
     };
+
+    // --- Logika Sentuh (Touch) untuk Mobile ---
+    const handleTouchStart = (e) => {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        
+        const originalElement = e.currentTarget;
+        draggedElementId = originalElement.dataset.id;
+
+        touchDraggableClone = originalElement.cloneNode(true);
+        touchDraggableClone.id = 'touch-clone';
+        document.body.appendChild(touchDraggableClone);
+
+        const touch = e.touches[0];
+        moveClone(touch.pageX, touch.pageY);
+        
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd, { once: true });
+    };
+
+    const handleTouchMove = (e) => {
+        if (!touchDraggableClone || e.touches.length !== 1) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        moveClone(touch.pageX, touch.pageY);
+        
+        DOMElements.transmutationCircles.forEach(circle => {
+            const rect = circle.getBoundingClientRect();
+            if (touch.clientX > rect.left && touch.clientX < rect.right &&
+                touch.clientY > rect.top && touch.clientY < rect.bottom) {
+                circle.classList.add('active');
+            } else {
+                circle.classList.remove('active');
+            }
+        });
+    };
+
+    const handleTouchEnd = (e) => {
+        let dropped = false;
+        DOMElements.transmutationCircles.forEach(circle => {
+            if (circle.classList.contains('active')) {
+                handleDrop({ preventDefault: () => {} });
+                dropped = true;
+            }
+            circle.classList.remove('active');
+        });
+
+        if (touchDraggableClone) {
+            touchDraggableClone.remove();
+            touchDraggableClone = null;
+        }
+        
+        if (!dropped) {
+            draggedElementId = null;
+        }
+
+        document.removeEventListener('touchmove', handleTouchMove);
+    };
+
+    const moveClone = (x, y) => {
+        if (!touchDraggableClone) return;
+        touchDraggableClone.style.left = `${x - touchDraggableClone.offsetWidth / 2}px`;
+        touchDraggableClone.style.top = `${y - touchDraggableClone.offsetHeight / 2}px`;
+    };
+
 
     // --- Tutorial ---
     let tutorialStep = 0;
     const tutorialSteps = [
         { text: "Selamat datang di Laboratorium Alkimia! Mari kita coba buat kombinasi pertama.", target: null },
-        { text: "Seret elemen 'Api' dari rak elemen di sebelah kiri.", target: '.element[data-id="fire"]' },
-        { text: "Letakkan elemen 'Api' ke dalam Lingkaran Transmutasi di tengah.", target: '#transmutation-circle' },
+        { text: "Seret elemen 'Api' dari rak elemen.", target: '.element[data-id="fire"]' },
+        { text: "Letakkan elemen 'Api' ke dalam Lingkaran Transmutasi di tengah.", target: '.transmutation-circle' },
         { text: "Bagus! Sekarang, seret elemen 'Air' ke lingkaran juga.", target: '.element[data-id="water"]' },
-        { text: "Lihat! Api dan Air menghasilkan Uap! Elemen baru telah ditambahkan ke rak-mu.", target: '#element-shelf-desktop' },
+        { text: "Lihat! Api dan Air menghasilkan Uap! Elemen baru telah ditambahkan ke rak-mu.", target: '#element-shelf-desktop, #element-shelf-mobile' },
         { text: "Resep yang kamu temukan akan tercatat di Grimoire. Sekarang kamu siap bereksperimen sendiri. Selamat mencoba!", target: null }
     ];
 
@@ -1037,9 +1138,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.tutorial-highlight').forEach(el => el.remove());
 
         if (step.target) {
-            const targetElement = document.querySelector(step.target);
-            if (targetElement) {
-                const rect = targetElement.getBoundingClientRect();
+            const targetElements = document.querySelectorAll(step.target);
+            const visibleTarget = Array.from(targetElements).find(el => el.offsetParent !== null);
+            
+            if (visibleTarget) {
+                const rect = visibleTarget.getBoundingClientRect();
                 const highlight = document.createElement('div');
                 highlight.className = 'tutorial-highlight';
                 highlight.style.cssText = `
@@ -1076,4 +1179,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </html>
-
